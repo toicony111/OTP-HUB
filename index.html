@@ -410,6 +410,7 @@
         let currentOrderId = null;
         let pollInterval = null;
         let pollCount = 0;
+        let maxPollCount = 60; // 5 phút (60 x 5 giây)
         let phoneNumber = '';
         let currentOTP = '';
         let workingProxyIndex = 0;
@@ -472,19 +473,21 @@
             try {
                 const data = await fetchAPI('/services');
                 
+                console.log('API Response:', data); // Debug
+                
                 if (data.success && data.data) {
                     const trumpService = findTrumpService(data.data);
                     
                     if (trumpService) {
                         SERVICE_TRUMP = trumpService.ID;
-                        apiStatus.textContent = `✅ ${trumpService.name}`;
+                        apiStatus.textContent = `✅ ${trumpService.name} (ID: ${trumpService.ID})`;
                         apiStatus.className = 'api-status success';
                         btnRentPhone.disabled = false;
                     } else {
                         apiStatus.textContent = '❌ Không tìm thấy dịch vụ Trump';
                         apiStatus.className = 'api-status error';
                         
-                        // Log related services
+                        // Log related services để debug
                         const related = data.data.filter(s => 
                             s.name.toLowerCase().includes('trump') || 
                             s.name.toLowerCase().includes('rips') || 
@@ -493,10 +496,13 @@
                         console.log('Related services:', related);
                         console.log('All services:', data.data.map(s => `${s.ID}: ${s.name}`));
                     }
+                } else {
+                    throw new Error(data.message || 'Response không hợp lệ');
                 }
             } catch (error) {
                 apiStatus.textContent = '❌ ' + error.message;
                 apiStatus.className = 'api-status error';
+                console.error('Connect error:', error);
             } finally {
                 btnConnect.disabled = false;
                 btnConnect.textContent = 'Kết nối';
@@ -508,8 +514,10 @@
             if (!API_KEY) throw new Error('Chưa có API Key');
             
             let url = `${BASE_URL}${endpoint}`;
+            const isPostRequest = options.method === 'POST' || options.method === 'PUT';
             
-            if (!options.method || options.method === 'GET') {
+            // Với GET request, thêm key vào query string
+            if (!isPostRequest) {
                 url += url.includes('?') ? `&key=${API_KEY}` : `?key=${API_KEY}`;
             }
             
@@ -528,18 +536,24 @@
                         }
                     };
                     
-                    if (options.method === 'POST' || options.method === 'PUT') {
+                    // Với POST request, gửi API key qua header x-api-key
+                    if (isPostRequest) {
                         fetchOptions.headers['x-api-key'] = API_KEY;
                     }
+                    
+                    console.log(`Trying ${proxy.name}:`, proxyUrl.substring(0, 100)); // Debug
                     
                     const response = await fetch(proxyUrl, fetchOptions);
                     
                     if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
+                        const errorText = await response.text();
+                        throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 100)}`);
                     }
                     
                     const data = await response.json();
+                    console.log(`${proxy.name} response:`, data); // Debug
                     
+                    // Nếu proxy này hoạt động, lưu lại
                     if (proxyIndex !== workingProxyIndex) {
                         workingProxyIndex = proxyIndex;
                         proxySelect.value = workingProxyIndex;
@@ -551,7 +565,7 @@
                 } catch (error) {
                     console.log(`Proxy ${proxy.name} fail:`, error.message);
                     if (i === PROXIES.length - 1) {
-                        throw new Error('Không thể kết nối. Thử đổi proxy khác.');
+                        throw new Error('Không thể kết nối. Thử đổi proxy khác. Lỗi: ' + error.message);
                     }
                 }
             }
@@ -559,24 +573,30 @@
 
         // ============ FIND SERVICE ============
         function findTrumpService(services) {
+            // Tìm chính xác "Rips By TriumPh"
             let service = services.find(s => s.name === 'Rips By TriumPh');
             if (service) return service;
             
+            // Tìm không phân biệt hoa thường
             service = services.find(s => s.name.toLowerCase() === 'rips by triumph');
             if (service) return service;
             
+            // Tìm chứa cả "rips" và "triumph"
             service = services.find(s => 
                 s.name.toLowerCase().includes('rips') && 
                 s.name.toLowerCase().includes('triumph')
             );
             if (service) return service;
             
+            // Tìm chứa "triumph"
             service = services.find(s => s.name.toLowerCase().includes('triumph'));
             if (service) return service;
             
+            // Tìm chứa "rips"
             service = services.find(s => s.name.toLowerCase().includes('rips'));
             if (service) return service;
             
+            // Tìm chứa "trump"
             service = services.find(s => s.name.toLowerCase().includes('trump'));
             return service;
         }
@@ -609,6 +629,7 @@
                 if (data.success) {
                     document.getElementById('resendCount').textContent = data.data?.resends || '1';
                     pollCount = 0;
+                    currentOTP = ''; // Reset OTP để có thể nhận code mới
                     startPolling();
                 }
             } catch (error) {
@@ -637,11 +658,14 @@
                     method: 'POST',
                     body: JSON.stringify({
                         country: COUNTRY_US,
-                        service: SERVICE_TRUMP
+                        service: String(SERVICE_TRUMP)
                     })
                 });
                 
+                console.log('Order response:', data); // Debug
+                
                 if (data.success && data.data) {
+                    // Xử lý số điện thoại - bỏ mã quốc gia +1
                     phoneNumber = data.data.phone.replace(/\D/g, '');
                     if (phoneNumber.startsWith('1')) {
                         phoneNumber = phoneNumber.substring(1);
@@ -664,6 +688,7 @@
                     btnCancelOrder.disabled = false;
                     btnResend.disabled = false;
                     
+                    // Copy số điện thoại
                     await navigator.clipboard.writeText(phoneNumber);
                     showFeedback('phoneFeedback');
                     
@@ -687,12 +712,16 @@
             stopPolling();
             pollCount = 0;
             
+            console.log('Bắt đầu poll OTP cho order:', currentOrderId);
+            
             pollInterval = setInterval(async () => {
                 pollCount++;
                 
-                if (pollCount > 60) {
+                console.log(`Poll lần ${pollCount}/${maxPollCount}`);
+                
+                if (pollCount > maxPollCount) {
                     stopPolling();
-                    otpDisplay.textContent = '⏰ Hết thời gian chờ';
+                    otpDisplay.textContent = '⏰ Hết thời gian chờ (5 phút)';
                     otpDisplay.className = 'otp-display waiting';
                     return;
                 }
@@ -700,23 +729,42 @@
                 try {
                     const data = await fetchAPI(`/order/${currentOrderId}`);
                     
+                    console.log('Poll response:', data); // Debug
+                    
                     if (data.success && data.data) {
+                        // Cập nhật thời gian hết hạn
+                        if (data.data.expires_in) {
+                            document.getElementById('expiresInfo').textContent = data.data.expires_in;
+                        }
+                        
+                        // Kiểm tra OTP - API trả về field "otp"
                         if (data.data.otp && data.data.otp !== currentOTP) {
                             currentOTP = data.data.otp;
                             otpDisplay.textContent = data.data.otp;
                             otpDisplay.className = 'otp-display';
                             otpActions.style.display = 'flex';
                             
+                            console.log('🎉 Nhận được OTP:', data.data.otp);
+                            
+                            // Tự động copy OTP
                             await navigator.clipboard.writeText(data.data.otp);
                             showFeedback('otpFeedback');
                             
+                            // Nếu status completed thì dừng poll
                             if (data.data.status === 'completed') {
                                 stopPolling();
+                                apiStatus.textContent = '✅ Đã nhận OTP thành công!';
+                                apiStatus.className = 'api-status success';
                             }
+                        }
+                        
+                        // Kiểm tra full_sms nếu có
+                        if (data.data.full_sms && !currentOTP) {
+                            console.log('Full SMS:', data.data.full_sms);
                         }
                     }
                 } catch (error) {
-                    console.log('Poll:', error.message);
+                    console.log('Poll error:', error.message);
                 }
             }, 5000);
         }
@@ -725,6 +773,7 @@
             if (pollInterval) {
                 clearInterval(pollInterval);
                 pollInterval = null;
+                console.log('Đã dừng poll');
             }
         }
 
@@ -732,6 +781,7 @@
             stopPolling();
             currentOrderId = null;
             currentOTP = '';
+            phoneNumber = '';
             document.getElementById('phoneDisplay').style.display = 'none';
             document.getElementById('rentalInfo').style.display = 'none';
             otpDisplay.textContent = '⏳ Chưa có code';
@@ -807,6 +857,13 @@
 
         // ============ START ============
         loadSavedKey();
+        
+        // Tự động kết nối nếu đã lưu key
+        if (apiKeyInput.value.trim()) {
+            console.log('Phát hiện API key đã lưu, tự động kết nối...');
+            // Bạn có thể bỏ comment dòng dưới để tự động kết nối
+            // connectAPI();
+        }
     </script>
 </body>
 </html>
