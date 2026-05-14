@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>OTP Hub Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 4px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 8px;
+            max-width: 400px;
+            width: 100%;
+            height: 100vh;
+            max-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .header {
+            text-align: center;
+            flex-shrink: 0;
+            padding: 2px 0;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 16px;
+            line-height: 1.2;
+        }
+
+        .api-setup {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 6px;
+            border: 1px solid #e0e0e0;
+            flex-shrink: 0;
+        }
+
+        .api-setup input {
+            width: 100%;
+            padding: 6px 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .api-setup input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .save-key {
+            font-size: 10px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .save-key select {
+            font-size: 10px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+        }
+
+        .api-status {
+            text-align: center;
+            padding: 4px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 500;
+            flex-shrink: 0;
+            min-height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .api-status.success { background: #d4edda; color: #155724; }
+        .api-status.error { background: #f8d7da; color: #721c24; }
+        .api-status.loading { background: #fff3cd; color: #856404; }
+
+        .sections-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .section {
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            flex-shrink: 0;
+        }
+
+        .section h2 {
+            color: #555;
+            font-size: 11px;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 6px;
+            border: none;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            transition: opacity 0.2s;
+        }
+
+        .btn:active { opacity: 0.8; transform: scale(0.98); }
+
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .btn-success { background: #28a745; }
+        .btn-warning { background: #ff6b6b; }
+        .btn-info { background: #17a2b8; }
+        .btn-secondary { background: #6c757d; }
+
+        .btn-small { width: auto; padding: 4px 8px; font-size: 10px; }
+        .btn:disabled { opacity: 0.5; pointer-events: none; }
+
+        .btn-row {
+            display: flex;
+            gap: 4px;
+        }
+
+        .btn-row .btn { flex: 1; }
+
+        .input-group {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 6px 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #17a2b8;
+        }
+
+        .copy-feedback {
+            font-size: 9px;
+            color: #28a745;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+            height: 14px;
+            line-height: 14px;
+        }
+
+        .copy-feedback.show { opacity: 1; }
+
+        .phone-display {
+            background: white;
+            padding: 6px;
+            border-radius: 4px;
+            border: 2px solid #667eea;
+            text-align: center;
+            font-size: 13px;
+            font-weight: bold;
+            color: #333;
+            margin: 4px 0;
+            word-break: break-all;
+        }
+
+        .otp-display {
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            border: 2px solid #ffc107;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin: 4px 0;
+            word-break: break-all;
+            letter-spacing: 2px;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .otp-display.waiting {
+            color: #999;
+            font-size: 11px;
+            font-weight: normal;
+            letter-spacing: 0;
+        }
+
+        .rental-info {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            color: #856404;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .loader-dark {
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            border-top-color: #667eea;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 OTP Hub Tool</h1>
+        </div>
+
+        <!-- API Key -->
+        <div class="api-setup">
+            <input 
+                type="text" 
+                id="apiKeyInput" 
+                placeholder="API Key..."
+                autocomplete="off"
+                value="47fe35d285e9a14ec4c9541e6d93d01bcd69451163a509e6363b25af8f972d43"
+            >
+            <div class="save-key">
+                <input type="checkbox" id="rememberKey" checked>
+                <label>Lưu Key</label>
+                <label style="margin-left:8px;">Proxy:</label>
+                <select id="proxySelect">
+                    <option value="0">allorigins</option>
+                    <option value="1">corsproxy</option>
+                    <option value="2">codetabs</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="api-status loading" id="apiStatus">
+            <span class="loader loader-dark"></span> Đang kết nối...
+        </div>
+
+        <div class="sections-wrapper">
+            <!-- Thuê số + OTP -->
+            <div class="section">
+                <h2>📱 Thuê số US - Rips By TriumPh</h2>
+                <div class="btn-row">
+                    <button class="btn btn-primary" id="btnRentPhone" onclick="rentPhone()" disabled>
+                        📞 Thuê số mới
+                    </button>
+                    <button class="btn btn-secondary btn-small" id="btnCancelOrder" onclick="cancelOrder()" disabled>
+                        ❌ Hủy
+                    </button>
+                </div>
+                
+                <div class="phone-display" id="phoneDisplay" style="display: none;">
+                    📱 <span id="phoneNumber"></span>
+                </div>
+                
+                <div class="otp-display waiting" id="otpDisplay">
+                    ⏳ Chưa có OTP
+                </div>
+                
+                <div class="btn-row" id="otpActions" style="display: none;">
+                    <button class="btn btn-info btn-small" onclick="copyOTP()">
+                        📋 Copy OTP
+                    </button>
+                    <button class="btn btn-warning btn-small" id="btnResend" onclick="resendSMS()" disabled>
+                        🔄 Gửi lại
+                    </button>
+                </div>
+                
+                <div class="rental-info" id="rentalInfo" style="display: none;">
+                    <span>ID: <span id="orderIdInfo"></span></span>
+                    <span>Hết hạn: <span id="expiresInfo"></span>s</span>
+                    <span>Resend: <span id="resendCount">0</span></span>
+                </div>
+                <div class="copy-feedback" id="phoneFeedback">✅ Đã copy!</div>
+                <div class="copy-feedback" id="otpFeedback">✅ Đã copy OTP!</div>
+            </div>
+
+            <!-- Random 1 -->
+            <div class="section">
+                <h2>🎲 Random (01-10)</h2>
+                <button class="btn btn-success" onclick="random1to10()">
+                    Random & Copy
+                </button>
+                <div class="copy-feedback" id="random1Feedback">✅ Đã copy!</div>
+            </div>
+
+            <!-- Random 2 -->
+            <div class="section">
+                <h2>🎰 Random (1975-2002)</h2>
+                <button class="btn btn-warning" onclick="random1975to2002()">
+                    Random & Copy
+                </button>
+                <div class="copy-feedback" id="random2Feedback">✅ Đã copy!</div>
+            </div>
+
+            <!-- Custom String -->
+            <div class="section">
+                <h2>✏️ Chuỗi tùy chỉnh</h2>
+                <div class="input-group">
+                    <input type="text" id="customString" value="DMXFXQD">
+                    <button class="btn btn-info btn-small" onclick="copyCustomString()">
+                        Copy
+                    </button>
+                </div>
+                <div class="copy-feedback" id="customFeedback">✅ Đã copy!</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ CONFIG ============
+        const BASE_URL = 'https://api.otphub.net/api/v1';
+        const COUNTRY_US = '1';
+        
+        const PROXIES = [
+            { name: 'allorigins', url: 'https://api.allorigins.win/raw?url=' },
+            { name: 'corsproxy', url: 'https://corsproxy.io/?' },
+            { name: 'codetabs', url: 'https://api.codetabs.com/v1/proxy?quest=' }
+        ];
+        
+        // ============ STATE ============
+        let API_KEY = '';
+        let SERVICE_TRUMP = null;
+        let currentOrderId = null;
+        let pollInterval = null;
+        let pollCount = 0;
+        let phoneNumber = '';
+        let currentOTP = '';
+        let workingProxyIndex = 0;
+        
+        // ============ DOM ============
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const rememberCheck = document.getElementById('rememberKey');
+        const apiStatus = document.getElementById('apiStatus');
+        const btnRentPhone = document.getElementById('btnRentPhone');
+        const btnCancelOrder = document.getElementById('btnCancelOrder');
+        const btnResend = document.getElementById('btnResend');
+        const otpDisplay = document.getElementById('otpDisplay');
+        const otpActions = document.getElementById('otpActions');
+        const proxySelect = document.getElementById('proxySelect');
+
+        // ============ INIT ============
+        function loadSavedKey() {
+            const saved = localStorage.getItem('otphub_api_key');
+            if (saved) {
+                apiKeyInput.value = saved;
+                rememberCheck.checked = true;
+            }
+            const savedProxy = localStorage.getItem('otphub_proxy_index');
+            if (savedProxy !== null) {
+                workingProxyIndex = parseInt(savedProxy);
+                proxySelect.value = workingProxyIndex;
+            }
+            // Tự động kết nối nếu có key
+            if (apiKeyInput.value.trim()) {
+                API_KEY = apiKeyInput.value.trim();
+                initializeAPI();
+            }
+        }
+
+        function saveSettings() {
+            if (rememberCheck.checked) {
+                localStorage.setItem('otphub_api_key', API_KEY);
+            } else {
+                localStorage.removeItem('otphub_api_key');
+            }
+            localStorage.setItem('otphub_proxy_index', workingProxyIndex);
+        }
+
+        // ============ API CALL ============
+        async function fetchAPI(endpoint, options = {}) {
+            if (!API_KEY) throw new Error('Chưa có API Key');
+            
+            let url = `${BASE_URL}${endpoint}`;
+            
+            if (!options.method || options.method === 'GET') {
+                url += url.includes('?') ? `&key=${API_KEY}` : `?key=${API_KEY}`;
+            }
+            
+            // Thử từng proxy
+            for (let i = 0; i < PROXIES.length; i++) {
+                const proxyIndex = (workingProxyIndex + i) % PROXIES.length;
+                const proxy = PROXIES[proxyIndex];
+                
+                try {
+                    const proxyUrl = proxy.url + encodeURIComponent(url);
+                    
+                    const fetchOptions = {
+                        ...options,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...options.headers
+                        }
+                    };
+                    
+                    if (options.method === 'POST' || options.method === 'PUT') {
+                        fetchOptions.headers['x-api-key'] = API_KEY;
+                    }
+                    
+                    const response = await fetch(proxyUrl, fetchOptions);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Cập nhật proxy nếu dùng proxy khác thành công
+                    if (proxyIndex !== workingProxyIndex) {
+                        workingProxyIndex = proxyIndex;
+                        proxySelect.value = workingProxyIndex;
+                        localStorage.setItem('otphub_proxy_index', workingProxyIndex);
+                    }
+                    
+                    return data;
+                    
+                } catch (error) {
+                    console.log(`Proxy ${proxy.name} fail:`, error.message);
+                    if (i === PROXIES.length - 1) {
+                        throw new Error('Không thể kết nối. Thử đổi proxy khác.');
+                    }
+                }
+            }
+        }
+
+        // ============ FIND SERVICE ============
+        function findTrumpService(services) {
+            // Tìm chính xác
+            let service = services.find(s => s.name === 'Rips By TriumPh');
+            if (service) return service;
+            
+            service = services.find(s => s.name.toLowerCase() === 'rips by triumph');
+            if (service) return service;
+            
+            service = services.find(s => 
+                s.name.toLowerCase().includes('rips') && 
+                s.name.toLowerCase().includes('triumph')
+            );
+            if (service) return service;
+            
+            service = services.find(s => s.name.toLowerCase().includes('triumph'));
+            if (service) return service;
+            
+            service = services.find(s => s.name.toLowerCase().includes('rips'));
+            if (service) return service;
+            
+            service = services.find(s => s.name.toLowerCase().includes('trump'));
+            return service;
+        }
+
+        // ============ CONNECT ============
+        async function initializeAPI() {
+            apiStatus.innerHTML = '<span class="loader loader-dark"></span> Đang tải dịch vụ...';
+            apiStatus.className = 'api-status loading';
+            
+            try {
+                const data = await fetchAPI('/services');
+                
+                if (data.success && data.data) {
+                    const trumpService = findTrumpService(data.data);
+                    
+                    if (trumpService) {
+                        SERVICE_TRUMP = trumpService.ID;
+                        apiStatus.textContent = `✅ ${trumpService.name} (ID: ${SERVICE_TRUMP})`;
+                        apiStatus.className = 'api-status success';
+                        btnRentPhone.disabled = false;
+                        saveSettings();
+                    } else {
+                        apiStatus.textContent = '❌ Không tìm thấy dịch vụ Trump';
+                        apiStatus.className = 'api-status error';
+                        btnRentPhone.disabled = true;
+                        console.log('Services:', data.data.map(s => `${s.ID}: ${s.name}`));
+                    }
+                }
+            } catch (error) {
+                apiStatus.textContent = '❌ ' + error.message;
+                apiStatus.className = 'api-status error';
+            }
+        }
+
+        // ============ ORDER ACTIONS ============
+        async function cancelOrder() {
+            if (!currentOrderId) return;
+            
+            try {
+                const data = await fetchAPI(`/order/${currentOrderId}/cancel`, { method: 'POST' });
+                if (data.success) {
+                    stopPolling();
+                    resetOrderUI();
+                    apiStatus.textContent = '✅ Đã hủy, hoàn: ' + (data.data?.refunded_amount || '?') + ' VND';
+                    apiStatus.className = 'api-status success';
+                }
+            } catch (error) {
+                alert('Lỗi hủy: ' + error.message);
+            }
+        }
+
+        async function resendSMS() {
+            if (!currentOrderId) return;
+            
+            btnResend.disabled = true;
+            btnResend.innerHTML = '<span class="loader"></span>';
+            
+            try {
+                const data = await fetchAPI(`/order/${currentOrderId}/resend`, { method: 'POST' });
+                if (data.success) {
+                    document.getElementById('resendCount').textContent = data.data?.resends || '1';
+                    pollCount = 0;
+                    startPolling();
+                }
+            } catch (error) {
+                alert('Lỗi: ' + error.message);
+            } finally {
+                btnResend.disabled = false;
+                btnResend.innerHTML = '🔄 Gửi lại';
+            }
+        }
+
+        async function rentPhone() {
+            if (!SERVICE_TRUMP) {
+                alert('Chưa kết nối!');
+                return;
+            }
+            
+            // Hủy đơn cũ nếu có
+            if (currentOrderId) {
+                try { await cancelOrder(); } catch (e) {}
+            }
+
+            btnRentPhone.disabled = true;
+            btnRentPhone.innerHTML = '<span class="loader"></span> Đang thuê...';
+            
+            try {
+                const data = await fetchAPI('/order', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        country: COUNTRY_US,
+                        service: SERVICE_TRUMP
+                    })
+                });
+                
+                if (data.success && data.data) {
+                    phoneNumber = data.data.phone.replace(/\D/g, '');
+                    if (phoneNumber.startsWith('1')) {
+                        phoneNumber = phoneNumber.substring(1);
+                    }
+                    
+                    currentOrderId = data.data.order_id;
+                    
+                    // Hiển thị
+                    document.getElementById('phoneDisplay').style.display = 'block';
+                    document.getElementById('phoneNumber').textContent = phoneNumber;
+                    document.getElementById('rentalInfo').style.display = 'flex';
+                    document.getElementById('orderIdInfo').textContent = currentOrderId;
+                    document.getElementById('expiresInfo').textContent = data.data.expires_in || 'N/A';
+                    document.getElementById('resendCount').textContent = '0';
+                    
+                    // Reset OTP
+                    currentOTP = '';
+                    otpDisplay.textContent = '⏳ Đang chờ OTP...';
+                    otpDisplay.className = 'otp-display waiting';
+                    otpActions.style.display = 'none';
+                    
+                    btnCancelOrder.disabled = false;
+                    btnResend.disabled = false;
+                    
+                    // Copy số
+                    await navigator.clipboard.writeText(phoneNumber);
+                    showFeedback('phoneFeedback');
+                    
+                    // Bắt đầu poll
+                    pollCount = 0;
+                    startPolling();
+                    
+                } else {
+                    throw new Error(data.message || 'Không thể thuê số');
+                }
+            } catch (error) {
+                alert('❌ Lỗi: ' + error.message);
+                resetOrderUI();
+            } finally {
+                btnRentPhone.disabled = false;
+                btnRentPhone.innerHTML = '📞 Thuê số mới';
+            }
+        }
+
+        // ============ POLL OTP ============
+        function startPolling() {
+            stopPolling();
+            pollCount = 0;
+            
+            pollInterval = setInterval(async () => {
+                pollCount++;
+                
+                if (pollCount > 60) {
+                    stopPolling();
+                    otpDisplay.textContent = '⏰ Hết thời gian chờ';
+                    otpDisplay.className = 'otp-display waiting';
+                    return;
+                }
+                
+                try {
+                    const data = await fetchAPI(`/order/${currentOrderId}`);
+                    
+                    if (data.success && data.data) {
+                        if (data.data.otp && data.data.otp !== currentOTP) {
+                            currentOTP = data.data.otp;
+                            otpDisplay.textContent = data.data.otp;
+                            otpDisplay.className = 'otp-display';
+                            otpActions.style.display = 'flex';
+                            
+                            await navigator.clipboard.writeText(data.data.otp);
+                            showFeedback('otpFeedback');
+                            
+                            if (data.data.status === 'completed') {
+                                stopPolling();
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.log('Poll:', error.message);
+                }
+            }, 5000);
+        }
+
+        function stopPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+            }
+        }
+
+        function resetOrderUI() {
+            stopPolling();
+            currentOrderId = null;
+            currentOTP = '';
+            document.getElementById('phoneDisplay').style.display = 'none';
+            document.getElementById('rentalInfo').style.display = 'none';
+            otpDisplay.textContent = '⏳ Chưa có OTP';
+            otpDisplay.className = 'otp-display waiting';
+            otpActions.style.display = 'none';
+            btnCancelOrder.disabled = true;
+            btnResend.disabled = true;
+        }
+
+        // ============ COPY ============
+        async function copyOTP() {
+            if (currentOTP) {
+                await navigator.clipboard.writeText(currentOTP);
+                showFeedback('otpFeedback');
+            }
+        }
+
+        async function random1to10() {
+            const num = Math.floor(Math.random() * 10) + 1;
+            await copyToClipboard(num.toString().padStart(2, '0'));
+            showFeedback('random1Feedback');
+        }
+
+        async function random1975to2002() {
+            const num = Math.floor(Math.random() * (2002 - 1975 + 1)) + 1975;
+            await copyToClipboard(num.toString());
+            showFeedback('random2Feedback');
+        }
+
+        async function copyCustomString() {
+            const str = document.getElementById('customString').value.trim();
+            if (str) {
+                await copyToClipboard(str);
+                showFeedback('customFeedback');
+            }
+        }
+
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch (err) {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+            }
+        }
+
+        function showFeedback(elementId) {
+            const el = document.getElementById(elementId);
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 1200);
+        }
+
+        // ============ EVENTS ============
+        proxySelect.addEventListener('change', () => {
+            workingProxyIndex = parseInt(proxySelect.value);
+            localStorage.setItem('otphub_proxy_index', workingProxyIndex);
+            if (API_KEY) initializeAPI();
+        });
+
+        apiKeyInput.addEventListener('input', (e) => {
+            API_KEY = e.target.value.trim();
+            saveSettings();
+            if (API_KEY) initializeAPI();
+        });
+
+        rememberCheck.addEventListener('change', saveSettings);
+
+        window.addEventListener('beforeunload', () => stopPolling());
+
+        // ============ START ============
+        loadSavedKey();
+    </script>
+</body>
+</html>
