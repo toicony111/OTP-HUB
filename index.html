@@ -255,6 +255,18 @@
             font-weight: normal;
             letter-spacing: 0;
         }
+        
+        .otp-display.received {
+            background: #fff9c4;
+            border: 3px solid #ff6f00;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
 
         .rental-info {
             background: #fff3cd;
@@ -284,6 +296,14 @@
         }
 
         @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .debug-info {
+            font-size: 8px;
+            color: #999;
+            margin-top: 4px;
+            text-align: center;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -292,7 +312,7 @@
             <h1>🔧 OTP Hub Tool</h1>
         </div>
 
-        <!-- API Key - Không hiển thị sẵn API Key -->
+        <!-- API Key -->
         <div class="api-setup">
             <div class="api-row">
                 <input 
@@ -357,6 +377,7 @@
                     <span>Hết hạn: <span id="expiresInfo"></span>s</span>
                     <span>Resend: <span id="resendCount">0</span></span>
                 </div>
+                <div class="debug-info" id="debugInfo"></div>
                 <div class="copy-feedback" id="phoneFeedback">✅ Đã copy số!</div>
                 <div class="copy-feedback" id="otpFeedback">✅ Đã copy code!</div>
             </div>
@@ -414,6 +435,7 @@
         let phoneNumber = '';
         let currentOTP = '';
         let workingProxyIndex = 0;
+        let isPollingActive = false;
         
         // ============ DOM ============
         const apiKeyInput = document.getElementById('apiKeyInput');
@@ -426,6 +448,7 @@
         const otpDisplay = document.getElementById('otpDisplay');
         const otpActions = document.getElementById('otpActions');
         const proxySelect = document.getElementById('proxySelect');
+        const debugInfo = document.getElementById('debugInfo');
 
         // ============ INIT ============
         function loadSavedKey() {
@@ -473,7 +496,7 @@
             try {
                 const data = await fetchAPI('/services');
                 
-                console.log('API Response:', data); // Debug
+                console.log('API Response:', data);
                 
                 if (data.success && data.data) {
                     const trumpService = findTrumpService(data.data);
@@ -486,14 +509,6 @@
                     } else {
                         apiStatus.textContent = '❌ Không tìm thấy dịch vụ Trump';
                         apiStatus.className = 'api-status error';
-                        
-                        // Log related services để debug
-                        const related = data.data.filter(s => 
-                            s.name.toLowerCase().includes('trump') || 
-                            s.name.toLowerCase().includes('rips') || 
-                            s.name.toLowerCase().includes('triumph')
-                        );
-                        console.log('Related services:', related);
                         console.log('All services:', data.data.map(s => `${s.ID}: ${s.name}`));
                     }
                 } else {
@@ -521,6 +536,8 @@
                 url += url.includes('?') ? `&key=${API_KEY}` : `?key=${API_KEY}`;
             }
             
+            let lastError = null;
+            
             for (let i = 0; i < PROXIES.length; i++) {
                 const proxyIndex = (workingProxyIndex + i) % PROXIES.length;
                 const proxy = PROXIES[proxyIndex];
@@ -541,8 +558,6 @@
                         fetchOptions.headers['x-api-key'] = API_KEY;
                     }
                     
-                    console.log(`Trying ${proxy.name}:`, proxyUrl.substring(0, 100)); // Debug
-                    
                     const response = await fetch(proxyUrl, fetchOptions);
                     
                     if (!response.ok) {
@@ -551,7 +566,6 @@
                     }
                     
                     const data = await response.json();
-                    console.log(`${proxy.name} response:`, data); // Debug
                     
                     // Nếu proxy này hoạt động, lưu lại
                     if (proxyIndex !== workingProxyIndex) {
@@ -564,8 +578,9 @@
                     
                 } catch (error) {
                     console.log(`Proxy ${proxy.name} fail:`, error.message);
+                    lastError = error;
                     if (i === PROXIES.length - 1) {
-                        throw new Error('Không thể kết nối. Thử đổi proxy khác. Lỗi: ' + error.message);
+                        throw new Error('Không thể kết nối. Thử đổi proxy khác. Lỗi: ' + lastError.message);
                     }
                 }
             }
@@ -573,30 +588,24 @@
 
         // ============ FIND SERVICE ============
         function findTrumpService(services) {
-            // Tìm chính xác "Rips By TriumPh"
             let service = services.find(s => s.name === 'Rips By TriumPh');
             if (service) return service;
             
-            // Tìm không phân biệt hoa thường
             service = services.find(s => s.name.toLowerCase() === 'rips by triumph');
             if (service) return service;
             
-            // Tìm chứa cả "rips" và "triumph"
             service = services.find(s => 
                 s.name.toLowerCase().includes('rips') && 
                 s.name.toLowerCase().includes('triumph')
             );
             if (service) return service;
             
-            // Tìm chứa "triumph"
             service = services.find(s => s.name.toLowerCase().includes('triumph'));
             if (service) return service;
             
-            // Tìm chứa "rips"
             service = services.find(s => s.name.toLowerCase().includes('rips'));
             if (service) return service;
             
-            // Tìm chứa "trump"
             service = services.find(s => s.name.toLowerCase().includes('trump'));
             return service;
         }
@@ -629,7 +638,11 @@
                 if (data.success) {
                     document.getElementById('resendCount').textContent = data.data?.resends || '1';
                     pollCount = 0;
-                    currentOTP = ''; // Reset OTP để có thể nhận code mới
+                    currentOTP = '';
+                    otpDisplay.textContent = '⏳ Đang chờ code mới...';
+                    otpDisplay.className = 'otp-display waiting';
+                    otpActions.style.display = 'none';
+                    debugInfo.style.display = 'none';
                     startPolling();
                 }
             } catch (error) {
@@ -662,10 +675,9 @@
                     })
                 });
                 
-                console.log('Order response:', data); // Debug
+                console.log('Order response:', data);
                 
                 if (data.success && data.data) {
-                    // Xử lý số điện thoại - bỏ mã quốc gia +1
                     phoneNumber = data.data.phone.replace(/\D/g, '');
                     if (phoneNumber.startsWith('1')) {
                         phoneNumber = phoneNumber.substring(1);
@@ -684,14 +696,15 @@
                     otpDisplay.textContent = '⏳ Đang chờ code...';
                     otpDisplay.className = 'otp-display waiting';
                     otpActions.style.display = 'none';
+                    debugInfo.style.display = 'none';
                     
                     btnCancelOrder.disabled = false;
                     btnResend.disabled = false;
                     
-                    // Copy số điện thoại
                     await navigator.clipboard.writeText(phoneNumber);
                     showFeedback('phoneFeedback');
                     
+                    // Bắt đầu poll ngay lập tức
                     pollCount = 0;
                     startPolling();
                     
@@ -707,73 +720,116 @@
             }
         }
 
-        // ============ POLL OTP ============
-        function startPolling() {
-            stopPolling();
-            pollCount = 0;
+        // ============ POLL OTP - ĐÃ SỬA ============
+        async function pollOTP() {
+            if (!currentOrderId || !isPollingActive) return;
             
-            console.log('Bắt đầu poll OTP cho order:', currentOrderId);
+            pollCount++;
             
-            pollInterval = setInterval(async () => {
-                pollCount++;
+            // Hiển thị debug
+            debugInfo.style.display = 'block';
+            debugInfo.textContent = `🔄 Poll #${pollCount}/${maxPollCount}...`;
+            
+            if (pollCount > maxPollCount) {
+                stopPolling();
+                otpDisplay.textContent = '⏰ Hết thời gian chờ';
+                otpDisplay.className = 'otp-display waiting';
+                debugInfo.textContent = '⏰ Đã hết thời gian chờ OTP';
+                return;
+            }
+            
+            try {
+                const data = await fetchAPI(`/order/${currentOrderId}`);
                 
-                console.log(`Poll lần ${pollCount}/${maxPollCount}`);
+                console.log('Poll response:', JSON.stringify(data, null, 2));
                 
-                if (pollCount > maxPollCount) {
-                    stopPolling();
-                    otpDisplay.textContent = '⏰ Hết thời gian chờ (5 phút)';
-                    otpDisplay.className = 'otp-display waiting';
-                    return;
-                }
-                
-                try {
-                    const data = await fetchAPI(`/order/${currentOrderId}`);
+                if (data.success && data.data) {
+                    // Cập nhật thời gian hết hạn
+                    if (data.data.expires_in) {
+                        document.getElementById('expiresInfo').textContent = data.data.expires_in;
+                    }
                     
-                    console.log('Poll response:', data); // Debug
+                    // Kiểm tra OTP - QUAN TRỌNG: API trả về field "otp"
+                    const otpValue = data.data.otp;
+                    const fullSms = data.data.full_sms;
+                    const status = data.data.status;
                     
-                    if (data.success && data.data) {
-                        // Cập nhật thời gian hết hạn
-                        if (data.data.expires_in) {
-                            document.getElementById('expiresInfo').textContent = data.data.expires_in;
-                        }
+                    debugInfo.textContent = `📊 Status: ${status} | OTP: ${otpValue || 'null'} | SMS: ${fullSms ? 'có' : 'không'}`;
+                    
+                    // Nếu có OTP (không null, không undefined, không rỗng)
+                    if (otpValue && otpValue !== currentOTP) {
+                        console.log('🎉 PHÁT HIỆN OTP MỚI:', otpValue);
                         
-                        // Kiểm tra OTP - API trả về field "otp"
-                        if (data.data.otp && data.data.otp !== currentOTP) {
-                            currentOTP = data.data.otp;
-                            otpDisplay.textContent = data.data.otp;
-                            otpDisplay.className = 'otp-display';
-                            otpActions.style.display = 'flex';
-                            
-                            console.log('🎉 Nhận được OTP:', data.data.otp);
-                            
-                            // Tự động copy OTP
-                            await navigator.clipboard.writeText(data.data.otp);
-                            showFeedback('otpFeedback');
-                            
-                            // Nếu status completed thì dừng poll
-                            if (data.data.status === 'completed') {
-                                stopPolling();
-                                apiStatus.textContent = '✅ Đã nhận OTP thành công!';
-                                apiStatus.className = 'api-status success';
-                            }
-                        }
+                        currentOTP = otpValue;
                         
-                        // Kiểm tra full_sms nếu có
-                        if (data.data.full_sms && !currentOTP) {
-                            console.log('Full SMS:', data.data.full_sms);
+                        // Cập nhật UI
+                        otpDisplay.textContent = otpValue;
+                        otpDisplay.className = 'otp-display received';
+                        otpActions.style.display = 'flex';
+                        debugInfo.textContent = `✅ Đã nhận OTP: ${otpValue}`;
+                        
+                        // Tự động copy
+                        await navigator.clipboard.writeText(otpValue);
+                        showFeedback('otpFeedback');
+                        
+                        apiStatus.textContent = '✅ Đã nhận OTP thành công!';
+                        apiStatus.className = 'api-status success';
+                        
+                        // Nếu completed thì dừng poll
+                        if (status === 'completed') {
+                            stopPolling();
+                            debugInfo.textContent = `✅ Hoàn thành: ${otpValue}`;
                         }
                     }
-                } catch (error) {
-                    console.log('Poll error:', error.message);
+                    // Nếu có full_sms nhưng không có otp riêng
+                    else if (fullSms && !otpValue && !currentOTP) {
+                        // Thử extract code từ SMS
+                        const codeMatch = fullSms.match(/\b(\d{4,8})\b/);
+                        if (codeMatch) {
+                            const extractedCode = codeMatch[1];
+                            console.log('📱 Extract code từ SMS:', extractedCode);
+                            
+                            currentOTP = extractedCode;
+                            otpDisplay.textContent = extractedCode;
+                            otpDisplay.className = 'otp-display received';
+                            otpActions.style.display = 'flex';
+                            debugInfo.textContent = `✅ Code từ SMS: ${extractedCode}`;
+                            
+                            await navigator.clipboard.writeText(extractedCode);
+                            showFeedback('otpFeedback');
+                        }
+                    }
+                } else {
+                    debugInfo.textContent = '❌ Response không có data';
                 }
+            } catch (error) {
+                console.log('Poll error:', error.message);
+                debugInfo.textContent = `❌ Lỗi poll: ${error.message}`;
+            }
+        }
+        
+        function startPolling() {
+            stopPolling();
+            isPollingActive = true;
+            pollCount = 0;
+            
+            console.log('🚀 Bắt đầu poll OTP cho order:', currentOrderId);
+            
+            // Poll lần đầu ngay lập tức
+            pollOTP();
+            
+            // Sau đó poll mỗi 5 giây
+            pollInterval = setInterval(() => {
+                pollOTP();
             }, 5000);
         }
 
         function stopPolling() {
+            isPollingActive = false;
             if (pollInterval) {
                 clearInterval(pollInterval);
                 pollInterval = null;
-                console.log('Đã dừng poll');
+                console.log('⏹️ Đã dừng poll');
             }
         }
 
@@ -789,6 +845,7 @@
             otpActions.style.display = 'none';
             btnCancelOrder.disabled = true;
             btnResend.disabled = true;
+            debugInfo.style.display = 'none';
         }
 
         // ============ COPY ============
@@ -848,7 +905,6 @@
 
         rememberCheck.addEventListener('change', saveSettings);
 
-        // Enter key to connect
         apiKeyInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') connectAPI();
         });
@@ -857,13 +913,6 @@
 
         // ============ START ============
         loadSavedKey();
-        
-        // Tự động kết nối nếu đã lưu key
-        if (apiKeyInput.value.trim()) {
-            console.log('Phát hiện API key đã lưu, tự động kết nối...');
-            // Bạn có thể bỏ comment dòng dưới để tự động kết nối
-            // connectAPI();
-        }
     </script>
 </body>
 </html>
