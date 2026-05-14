@@ -60,19 +60,39 @@
             flex-shrink: 0;
         }
 
-        .api-setup input {
-            width: 100%;
+        .api-row {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .api-row input {
+            flex: 1;
             padding: 6px 8px;
             border: 2px solid #e0e0e0;
             border-radius: 4px;
             font-size: 12px;
-            margin-bottom: 4px;
         }
 
-        .api-setup input:focus {
+        .api-row input:focus {
             outline: none;
             border-color: #667eea;
         }
+
+        .api-row button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+            background: #667eea;
+            white-space: nowrap;
+        }
+
+        .api-row button:active { opacity: 0.8; }
 
         .save-key {
             font-size: 10px;
@@ -106,6 +126,7 @@
 
         .api-status.success { background: #d4edda; color: #155724; }
         .api-status.error { background: #f8d7da; color: #721c24; }
+        .api-status.idle { background: #e2e3e5; color: #383d41; }
         .api-status.loading { background: #fff3cd; color: #856404; }
 
         .sections-wrapper {
@@ -271,18 +292,22 @@
             <h1>🔧 OTP Hub Tool</h1>
         </div>
 
-        <!-- API Key -->
+        <!-- API Key - ẨN KEY, chỉ có ô nhập -->
         <div class="api-setup">
-            <input 
-                type="text" 
-                id="apiKeyInput" 
-                placeholder="API Key..."
-                autocomplete="off"
-                value="47fe35d285e9a14ec4c9541e6d93d01bcd69451163a509e6363b25af8f972d43"
-            >
+            <div class="api-row">
+                <input 
+                    type="password" 
+                    id="apiKeyInput" 
+                    placeholder="Nhập API Key để kết nối..."
+                    autocomplete="off"
+                >
+                <button onclick="connectAPI()" id="btnConnect">
+                    Kết nối
+                </button>
+            </div>
             <div class="save-key">
                 <input type="checkbox" id="rememberKey" checked>
-                <label>Lưu Key</label>
+                <label>Lưu API Key</label>
                 <label style="margin-left:8px;">Proxy:</label>
                 <select id="proxySelect">
                     <option value="0">allorigins</option>
@@ -292,8 +317,8 @@
             </div>
         </div>
 
-        <div class="api-status loading" id="apiStatus">
-            <span class="loader loader-dark"></span> Đang kết nối...
+        <div class="api-status idle" id="apiStatus">
+            🔐 Nhập API Key và nhấn "Kết nối"
         </div>
 
         <div class="sections-wrapper">
@@ -398,6 +423,7 @@
         const otpDisplay = document.getElementById('otpDisplay');
         const otpActions = document.getElementById('otpActions');
         const proxySelect = document.getElementById('proxySelect');
+        const btnConnect = document.getElementById('btnConnect');
 
         // ============ INIT ============
         function loadSavedKey() {
@@ -411,20 +437,70 @@
                 workingProxyIndex = parseInt(savedProxy);
                 proxySelect.value = workingProxyIndex;
             }
-            // Tự động kết nối nếu có key
-            if (apiKeyInput.value.trim()) {
-                API_KEY = apiKeyInput.value.trim();
-                initializeAPI();
-            }
         }
 
-        function saveSettings() {
+        // ============ CONNECT ============
+        async function connectAPI() {
+            const key = apiKeyInput.value.trim();
+            if (!key) {
+                apiStatus.textContent = '❌ Vui lòng nhập API Key';
+                apiStatus.className = 'api-status error';
+                return;
+            }
+            
+            API_KEY = key;
+            
+            // Lưu settings
             if (rememberCheck.checked) {
-                localStorage.setItem('otphub_api_key', API_KEY);
+                localStorage.setItem('otphub_api_key', key);
             } else {
                 localStorage.removeItem('otphub_api_key');
             }
+            workingProxyIndex = parseInt(proxySelect.value);
             localStorage.setItem('otphub_proxy_index', workingProxyIndex);
+            
+            // Reset
+            btnRentPhone.disabled = true;
+            SERVICE_TRUMP = null;
+            
+            // Loading
+            btnConnect.disabled = true;
+            btnConnect.textContent = '...';
+            apiStatus.innerHTML = '<span class="loader loader-dark"></span> Đang kết nối...';
+            apiStatus.className = 'api-status loading';
+            
+            try {
+                const data = await fetchAPI('/services');
+                
+                if (data.success && data.data) {
+                    SERVICE_TRUMP = findTrumpService(data.data);
+                    
+                    if (SERVICE_TRUMP) {
+                        const serviceName = data.data.find(s => s.ID === SERVICE_TRUMP)?.name || 'Trump';
+                        apiStatus.textContent = `✅ ${serviceName} | Proxy: ${PROXIES[workingProxyIndex].name}`;
+                        apiStatus.className = 'api-status success';
+                        btnRentPhone.disabled = false;
+                        
+                        // Kiểm tra stock
+                        try {
+                            const stockData = await fetchAPI(`/stock?country=${COUNTRY_US}&service=${SERVICE_TRUMP}`);
+                            if (stockData.success) {
+                                apiStatus.textContent += ` | Stock: ${stockData.data.stock}`;
+                            }
+                        } catch (e) {}
+                    } else {
+                        apiStatus.textContent = '❌ Không tìm thấy dịch vụ Trump';
+                        apiStatus.className = 'api-status error';
+                        console.log('Services:', data.data.map(s => `${s.ID}: ${s.name}`));
+                    }
+                }
+            } catch (error) {
+                apiStatus.textContent = '❌ ' + error.message;
+                apiStatus.className = 'api-status error';
+            } finally {
+                btnConnect.disabled = false;
+                btnConnect.textContent = 'Kết nối';
+            }
         }
 
         // ============ API CALL ============
@@ -437,7 +513,6 @@
                 url += url.includes('?') ? `&key=${API_KEY}` : `?key=${API_KEY}`;
             }
             
-            // Thử từng proxy
             for (let i = 0; i < PROXIES.length; i++) {
                 const proxyIndex = (workingProxyIndex + i) % PROXIES.length;
                 const proxy = PROXIES[proxyIndex];
@@ -465,7 +540,6 @@
                     
                     const data = await response.json();
                     
-                    // Cập nhật proxy nếu dùng proxy khác thành công
                     if (proxyIndex !== workingProxyIndex) {
                         workingProxyIndex = proxyIndex;
                         proxySelect.value = workingProxyIndex;
@@ -485,57 +559,28 @@
 
         // ============ FIND SERVICE ============
         function findTrumpService(services) {
-            // Tìm chính xác
             let service = services.find(s => s.name === 'Rips By TriumPh');
-            if (service) return service;
+            if (service) return service.ID;
             
             service = services.find(s => s.name.toLowerCase() === 'rips by triumph');
-            if (service) return service;
+            if (service) return service.ID;
             
             service = services.find(s => 
                 s.name.toLowerCase().includes('rips') && 
                 s.name.toLowerCase().includes('triumph')
             );
-            if (service) return service;
+            if (service) return service.ID;
             
             service = services.find(s => s.name.toLowerCase().includes('triumph'));
-            if (service) return service;
+            if (service) return service.ID;
             
             service = services.find(s => s.name.toLowerCase().includes('rips'));
-            if (service) return service;
+            if (service) return service.ID;
             
             service = services.find(s => s.name.toLowerCase().includes('trump'));
-            return service;
-        }
-
-        // ============ CONNECT ============
-        async function initializeAPI() {
-            apiStatus.innerHTML = '<span class="loader loader-dark"></span> Đang tải dịch vụ...';
-            apiStatus.className = 'api-status loading';
+            if (service) return service.ID;
             
-            try {
-                const data = await fetchAPI('/services');
-                
-                if (data.success && data.data) {
-                    const trumpService = findTrumpService(data.data);
-                    
-                    if (trumpService) {
-                        SERVICE_TRUMP = trumpService.ID;
-                        apiStatus.textContent = `✅ ${trumpService.name} (ID: ${SERVICE_TRUMP})`;
-                        apiStatus.className = 'api-status success';
-                        btnRentPhone.disabled = false;
-                        saveSettings();
-                    } else {
-                        apiStatus.textContent = '❌ Không tìm thấy dịch vụ Trump';
-                        apiStatus.className = 'api-status error';
-                        btnRentPhone.disabled = true;
-                        console.log('Services:', data.data.map(s => `${s.ID}: ${s.name}`));
-                    }
-                }
-            } catch (error) {
-                apiStatus.textContent = '❌ ' + error.message;
-                apiStatus.className = 'api-status error';
-            }
+            return null;
         }
 
         // ============ ORDER ACTIONS ============
@@ -578,11 +623,10 @@
 
         async function rentPhone() {
             if (!SERVICE_TRUMP) {
-                alert('Chưa kết nối!');
+                alert('Chưa kết nối! Nhập API Key và nhấn Kết nối.');
                 return;
             }
             
-            // Hủy đơn cũ nếu có
             if (currentOrderId) {
                 try { await cancelOrder(); } catch (e) {}
             }
@@ -607,7 +651,6 @@
                     
                     currentOrderId = data.data.order_id;
                     
-                    // Hiển thị
                     document.getElementById('phoneDisplay').style.display = 'block';
                     document.getElementById('phoneNumber').textContent = phoneNumber;
                     document.getElementById('rentalInfo').style.display = 'flex';
@@ -615,7 +658,6 @@
                     document.getElementById('expiresInfo').textContent = data.data.expires_in || 'N/A';
                     document.getElementById('resendCount').textContent = '0';
                     
-                    // Reset OTP
                     currentOTP = '';
                     otpDisplay.textContent = '⏳ Đang chờ OTP...';
                     otpDisplay.className = 'otp-display waiting';
@@ -624,11 +666,9 @@
                     btnCancelOrder.disabled = false;
                     btnResend.disabled = false;
                     
-                    // Copy số
                     await navigator.clipboard.writeText(phoneNumber);
                     showFeedback('phoneFeedback');
                     
-                    // Bắt đầu poll
                     pollCount = 0;
                     startPolling();
                     
@@ -756,16 +796,19 @@
         proxySelect.addEventListener('change', () => {
             workingProxyIndex = parseInt(proxySelect.value);
             localStorage.setItem('otphub_proxy_index', workingProxyIndex);
-            if (API_KEY) initializeAPI();
         });
 
-        apiKeyInput.addEventListener('input', (e) => {
-            API_KEY = e.target.value.trim();
-            saveSettings();
-            if (API_KEY) initializeAPI();
+        apiKeyInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') connectAPI();
         });
 
-        rememberCheck.addEventListener('change', saveSettings);
+        rememberCheck.addEventListener('change', () => {
+            if (rememberCheck.checked && API_KEY) {
+                localStorage.setItem('otphub_api_key', API_KEY);
+            } else {
+                localStorage.removeItem('otphub_api_key');
+            }
+        });
 
         window.addEventListener('beforeunload', () => stopPolling());
 
