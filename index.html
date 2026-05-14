@@ -64,7 +64,6 @@
             display: flex;
             gap: 4px;
             align-items: center;
-            margin-bottom: 4px;
         }
 
         .api-row input {
@@ -81,7 +80,7 @@
         }
 
         .api-row button {
-            padding: 6px 12px;
+            padding: 6px 10px;
             border: none;
             border-radius: 4px;
             font-size: 11px;
@@ -97,6 +96,7 @@
         .save-key {
             font-size: 10px;
             color: #666;
+            margin-top: 4px;
             display: flex;
             align-items: center;
             gap: 4px;
@@ -292,13 +292,13 @@
             <h1>🔧 OTP Hub Tool</h1>
         </div>
 
-        <!-- API Key - ẨN KEY, chỉ có ô nhập -->
+        <!-- API Key - Không hiển thị sẵn API Key -->
         <div class="api-setup">
             <div class="api-row">
                 <input 
                     type="password" 
                     id="apiKeyInput" 
-                    placeholder="Nhập API Key để kết nối..."
+                    placeholder="Nhập API Key..."
                     autocomplete="off"
                 >
                 <button onclick="connectAPI()" id="btnConnect">
@@ -307,7 +307,7 @@
             </div>
             <div class="save-key">
                 <input type="checkbox" id="rememberKey" checked>
-                <label>Lưu API Key</label>
+                <label>Lưu Key</label>
                 <label style="margin-left:8px;">Proxy:</label>
                 <select id="proxySelect">
                     <option value="0">allorigins</option>
@@ -318,7 +318,7 @@
         </div>
 
         <div class="api-status idle" id="apiStatus">
-            🔐 Nhập API Key và nhấn "Kết nối"
+            ⚡ Nhập API Key và nhấn "Kết nối"
         </div>
 
         <div class="sections-wrapper">
@@ -338,13 +338,14 @@
                     📱 <span id="phoneNumber"></span>
                 </div>
                 
+                <!-- Khung hiển thị OTP/Code -->
                 <div class="otp-display waiting" id="otpDisplay">
-                    ⏳ Chưa có OTP
+                    ⏳ Chưa có code
                 </div>
                 
                 <div class="btn-row" id="otpActions" style="display: none;">
                     <button class="btn btn-info btn-small" onclick="copyOTP()">
-                        📋 Copy OTP
+                        📋 Copy Code
                     </button>
                     <button class="btn btn-warning btn-small" id="btnResend" onclick="resendSMS()" disabled>
                         🔄 Gửi lại
@@ -356,8 +357,8 @@
                     <span>Hết hạn: <span id="expiresInfo"></span>s</span>
                     <span>Resend: <span id="resendCount">0</span></span>
                 </div>
-                <div class="copy-feedback" id="phoneFeedback">✅ Đã copy!</div>
-                <div class="copy-feedback" id="otpFeedback">✅ Đã copy OTP!</div>
+                <div class="copy-feedback" id="phoneFeedback">✅ Đã copy số!</div>
+                <div class="copy-feedback" id="otpFeedback">✅ Đã copy code!</div>
             </div>
 
             <!-- Random 1 -->
@@ -420,10 +421,10 @@
         const btnRentPhone = document.getElementById('btnRentPhone');
         const btnCancelOrder = document.getElementById('btnCancelOrder');
         const btnResend = document.getElementById('btnResend');
+        const btnConnect = document.getElementById('btnConnect');
         const otpDisplay = document.getElementById('otpDisplay');
         const otpActions = document.getElementById('otpActions');
         const proxySelect = document.getElementById('proxySelect');
-        const btnConnect = document.getElementById('btnConnect');
 
         // ============ INIT ============
         function loadSavedKey() {
@@ -439,6 +440,15 @@
             }
         }
 
+        function saveSettings() {
+            if (rememberCheck.checked && API_KEY) {
+                localStorage.setItem('otphub_api_key', API_KEY);
+            } else {
+                localStorage.removeItem('otphub_api_key');
+            }
+            localStorage.setItem('otphub_proxy_index', workingProxyIndex);
+        }
+
         // ============ CONNECT ============
         async function connectAPI() {
             const key = apiKeyInput.value.trim();
@@ -449,23 +459,13 @@
             }
             
             API_KEY = key;
+            saveSettings();
             
-            // Lưu settings
-            if (rememberCheck.checked) {
-                localStorage.setItem('otphub_api_key', key);
-            } else {
-                localStorage.removeItem('otphub_api_key');
-            }
-            workingProxyIndex = parseInt(proxySelect.value);
-            localStorage.setItem('otphub_proxy_index', workingProxyIndex);
-            
-            // Reset
+            btnConnect.disabled = true;
+            btnConnect.textContent = '...';
             btnRentPhone.disabled = true;
             SERVICE_TRUMP = null;
             
-            // Loading
-            btnConnect.disabled = true;
-            btnConnect.textContent = '...';
             apiStatus.innerHTML = '<span class="loader loader-dark"></span> Đang kết nối...';
             apiStatus.className = 'api-status loading';
             
@@ -473,25 +473,25 @@
                 const data = await fetchAPI('/services');
                 
                 if (data.success && data.data) {
-                    SERVICE_TRUMP = findTrumpService(data.data);
+                    const trumpService = findTrumpService(data.data);
                     
-                    if (SERVICE_TRUMP) {
-                        const serviceName = data.data.find(s => s.ID === SERVICE_TRUMP)?.name || 'Trump';
-                        apiStatus.textContent = `✅ ${serviceName} | Proxy: ${PROXIES[workingProxyIndex].name}`;
+                    if (trumpService) {
+                        SERVICE_TRUMP = trumpService.ID;
+                        apiStatus.textContent = `✅ ${trumpService.name}`;
                         apiStatus.className = 'api-status success';
                         btnRentPhone.disabled = false;
-                        
-                        // Kiểm tra stock
-                        try {
-                            const stockData = await fetchAPI(`/stock?country=${COUNTRY_US}&service=${SERVICE_TRUMP}`);
-                            if (stockData.success) {
-                                apiStatus.textContent += ` | Stock: ${stockData.data.stock}`;
-                            }
-                        } catch (e) {}
                     } else {
                         apiStatus.textContent = '❌ Không tìm thấy dịch vụ Trump';
                         apiStatus.className = 'api-status error';
-                        console.log('Services:', data.data.map(s => `${s.ID}: ${s.name}`));
+                        
+                        // Log related services
+                        const related = data.data.filter(s => 
+                            s.name.toLowerCase().includes('trump') || 
+                            s.name.toLowerCase().includes('rips') || 
+                            s.name.toLowerCase().includes('triumph')
+                        );
+                        console.log('Related services:', related);
+                        console.log('All services:', data.data.map(s => `${s.ID}: ${s.name}`));
                     }
                 }
             } catch (error) {
@@ -560,27 +560,25 @@
         // ============ FIND SERVICE ============
         function findTrumpService(services) {
             let service = services.find(s => s.name === 'Rips By TriumPh');
-            if (service) return service.ID;
+            if (service) return service;
             
             service = services.find(s => s.name.toLowerCase() === 'rips by triumph');
-            if (service) return service.ID;
+            if (service) return service;
             
             service = services.find(s => 
                 s.name.toLowerCase().includes('rips') && 
                 s.name.toLowerCase().includes('triumph')
             );
-            if (service) return service.ID;
+            if (service) return service;
             
             service = services.find(s => s.name.toLowerCase().includes('triumph'));
-            if (service) return service.ID;
+            if (service) return service;
             
             service = services.find(s => s.name.toLowerCase().includes('rips'));
-            if (service) return service.ID;
+            if (service) return service;
             
             service = services.find(s => s.name.toLowerCase().includes('trump'));
-            if (service) return service.ID;
-            
-            return null;
+            return service;
         }
 
         // ============ ORDER ACTIONS ============
@@ -659,7 +657,7 @@
                     document.getElementById('resendCount').textContent = '0';
                     
                     currentOTP = '';
-                    otpDisplay.textContent = '⏳ Đang chờ OTP...';
+                    otpDisplay.textContent = '⏳ Đang chờ code...';
                     otpDisplay.className = 'otp-display waiting';
                     otpActions.style.display = 'none';
                     
@@ -736,7 +734,7 @@
             currentOTP = '';
             document.getElementById('phoneDisplay').style.display = 'none';
             document.getElementById('rentalInfo').style.display = 'none';
-            otpDisplay.textContent = '⏳ Chưa có OTP';
+            otpDisplay.textContent = '⏳ Chưa có code';
             otpDisplay.className = 'otp-display waiting';
             otpActions.style.display = 'none';
             btnCancelOrder.disabled = true;
@@ -798,16 +796,11 @@
             localStorage.setItem('otphub_proxy_index', workingProxyIndex);
         });
 
+        rememberCheck.addEventListener('change', saveSettings);
+
+        // Enter key to connect
         apiKeyInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') connectAPI();
-        });
-
-        rememberCheck.addEventListener('change', () => {
-            if (rememberCheck.checked && API_KEY) {
-                localStorage.setItem('otphub_api_key', API_KEY);
-            } else {
-                localStorage.removeItem('otphub_api_key');
-            }
         });
 
         window.addEventListener('beforeunload', () => stopPolling());
