@@ -1,494 +1,1227 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>OTP Hub Tool Fixed</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#667eea,#764ba2)}
-body{display:flex;justify-content:center;align-items:center;padding:4px}
-.container{background:#fff;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.2);padding:8px;max-width:400px;width:100%;height:100vh;display:flex;flex-direction:column;gap:5px}
-h1{text-align:center;font-size:16px;color:#333}
-.box{background:#f8f9fa;border:1px solid #ddd;border-radius:6px;padding:7px}
-.row{display:flex;gap:4px}
-input,select{padding:6px;border:2px solid #ddd;border-radius:4px;font-size:12px}
-input{flex:1}
-button{border:0;border-radius:4px;padding:7px;color:#fff;font-weight:700;font-size:11px;cursor:pointer}
-button:disabled{opacity:.5;pointer-events:none}
-button:active{transform:scale(.98);opacity:.85}
-.primary{background:linear-gradient(135deg,#667eea,#764ba2)}
-.success{background:#28a745}
-.danger{background:#ff6b6b}
-.info{background:#17a2b8}
-.gray{background:#6c757d}
-.status{font-size:10px;text-align:center;padding:5px;border-radius:4px}
-.idle{background:#e2e3e5;color:#383d41}
-.ok{background:#d4edda;color:#155724}
-.err{background:#f8d7da;color:#721c24}
-.wait{background:#fff3cd;color:#856404}
-.scroll{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:5px}
-h2{font-size:11px;color:#555;margin-bottom:5px}
-.display{background:#fff;border:2px solid #667eea;border-radius:4px;padding:7px;text-align:center;font-weight:700;font-size:14px;word-break:break-all;margin-top:5px}
-.otp{border-color:#ffc107;font-size:17px;letter-spacing:2px;min-height:38px;display:flex;align-items:center;justify-content:center}
-.otp.waiting{font-size:11px;color:#888;font-weight:400;letter-spacing:0}
-.feedback{height:14px;text-align:center;font-size:9px;color:#28a745;opacity:0;transition:.25s}
-.feedback.show{opacity:1}
-.info-line{display:flex;justify-content:space-between;gap:4px;flex-wrap:wrap;background:#fff3cd;border:1px solid #ffc107;color:#856404;border-radius:4px;font-size:9px;padding:4px;margin-top:5px}
-.debug{display:none;background:#111;color:#00ff00;font-family:monospace;font-size:8px;line-height:1.4;max-height:90px;overflow:auto;padding:5px;border-radius:4px;margin-top:5px}
-.small{padding:6px;font-size:10px}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>OTP Hub Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 4px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 8px;
+            max-width: 400px;
+            width: 100%;
+            height: 100vh;
+            max-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .header {
+            text-align: center;
+            flex-shrink: 0;
+            padding: 2px 0;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 16px;
+            line-height: 1.2;
+        }
+
+        .api-setup {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 6px;
+            border: 1px solid #e0e0e0;
+            flex-shrink: 0;
+        }
+
+        .api-row {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .api-row input {
+            flex: 1;
+            padding: 6px 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .api-row input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .api-row button {
+            padding: 6px 10px;
+            border: none;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            white-space: nowrap;
+        }
+
+        .api-row button:active { opacity: 0.8; }
+
+        .save-key {
+            font-size: 10px;
+            color: #666;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .save-key select {
+            font-size: 10px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+        }
+
+        .api-status {
+            text-align: center;
+            padding: 4px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 500;
+            flex-shrink: 0;
+            min-height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            flex-wrap: wrap;
+            word-break: break-all;
+        }
+
+        .api-status.success { background: #d4edda; color: #155724; }
+        .api-status.error { background: #f8d7da; color: #721c24; }
+        .api-status.idle { background: #e2e3e5; color: #383d41; }
+        .api-status.loading { background: #fff3cd; color: #856404; }
+
+        .sections-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .section {
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            flex-shrink: 0;
+        }
+
+        .section h2 {
+            color: #555;
+            font-size: 11px;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 6px;
+            border: none;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            transition: opacity 0.2s;
+        }
+
+        .btn:active { opacity: 0.8; transform: scale(0.98); }
+
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .btn-success { background: #28a745; }
+        .btn-warning { background: #ff6b6b; }
+        .btn-info { background: #17a2b8; }
+        .btn-secondary { background: #6c757d; }
+
+        .btn-small { width: auto; padding: 4px 8px; font-size: 10px; }
+        .btn:disabled { opacity: 0.5; pointer-events: none; }
+
+        .btn-row {
+            display: flex;
+            gap: 4px;
+        }
+
+        .btn-row .btn { flex: 1; }
+
+        .input-group {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 6px 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #17a2b8;
+        }
+
+        .copy-feedback {
+            font-size: 9px;
+            color: #28a745;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+            height: 14px;
+            line-height: 14px;
+        }
+
+        .copy-feedback.show { opacity: 1; }
+
+        .phone-display {
+            background: white;
+            padding: 6px;
+            border-radius: 4px;
+            border: 2px solid #667eea;
+            text-align: center;
+            font-size: 13px;
+            font-weight: bold;
+            color: #333;
+            margin: 4px 0;
+            word-break: break-all;
+            cursor: pointer;
+            user-select: all;
+        }
+
+        .otp-display {
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            border: 2px solid #ffc107;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin: 4px 0;
+            word-break: break-all;
+            letter-spacing: 2px;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: all;
+        }
+
+        .otp-display.waiting {
+            color: #999;
+            font-size: 11px;
+            font-weight: normal;
+            letter-spacing: 0;
+            cursor: default;
+        }
+
+        .rental-info {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            color: #856404;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .loader-dark {
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            border-top-color: #667eea;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .debug-panel {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 6px;
+            border-radius: 4px;
+            font-size: 8px;
+            font-family: monospace;
+            max-height: 80px;
+            overflow-y: auto;
+            margin-top: 4px;
+            display: none;
+            line-height: 1.4;
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-  <h1>🔧 OTP Hub Tool Fixed</h1>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 OTP Hub Tool v2</h1>
+        </div>
 
-  <div class="box">
-    <div class="row">
-      <input id="apiKey" type="password" placeholder="Nhập API Key..." autocomplete="off">
-      <button class="primary" id="btnConnect" onclick="connectAPI()">Kết nối</button>
+        <!-- API Key -->
+        <div class="api-setup">
+            <div class="api-row">
+                <input 
+                    type="password" 
+                    id="apiKeyInput" 
+                    placeholder="Nhập API Key..."
+                    autocomplete="off"
+                >
+                <button onclick="connectAPI()" id="btnConnect">
+                    Kết nối
+                </button>
+            </div>
+            <div class="save-key">
+                <input type="checkbox" id="rememberKey" checked>
+                <label>Lưu Key</label>
+                <label style="margin-left:8px;">Mode:</label>
+                <select id="modeSelect">
+                    <option value="direct">Direct API</option>
+                    <option value="proxy">CORS Proxy</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="api-status idle" id="apiStatus">
+            ⚡ Nhập API Key và nhấn "Kết nối"
+        </div>
+
+        <div class="sections-wrapper">
+            <!-- Thuê số + OTP -->
+            <div class="section">
+                <h2>📱 Thuê số US - Rips By TriumPh</h2>
+                <div class="btn-row">
+                    <button class="btn btn-primary" id="btnRentPhone" onclick="rentPhone()" disabled>
+                        📞 Thuê số mới
+                    </button>
+                    <button class="btn btn-secondary btn-small" id="btnCancelOrder" onclick="cancelOrder()" disabled>
+                        ❌ Hủy
+                    </button>
+                </div>
+                
+                <div class="phone-display" id="phoneDisplay" style="display: none;" onclick="copyPhone()">
+                    📱 <span id="phoneNumber"></span>
+                </div>
+                
+                <div class="otp-display waiting" id="otpDisplay" onclick="copyOTP()">
+                    ⏳ Chưa có code
+                </div>
+                
+                <div class="btn-row" id="otpActions" style="display: none;">
+                    <button class="btn btn-info btn-small" onclick="copyOTP()">
+                        📋 Copy Code
+                    </button>
+                    <button class="btn btn-warning btn-small" id="btnResend" onclick="resendSMS()" disabled>
+                        🔄 Gửi lại
+                    </button>
+                </div>
+                
+                <div class="rental-info" id="rentalInfo" style="display: none;">
+                    <span>ID: <span id="orderIdInfo"></span></span>
+                    <span>Hết hạn: <span id="expiresInfo"></span>s</span>
+                    <span>Resend: <span id="resendCount">0</span></span>
+                </div>
+                <div class="copy-feedback" id="phoneFeedback">✅ Đã copy số!</div>
+                <div class="copy-feedback" id="otpFeedback">✅ Đã copy code!</div>
+                <div class="debug-panel" id="debugPanel"></div>
+            </div>
+
+            <!-- Random 1 -->
+            <div class="section">
+                <h2>🎲 Random (01-10)</h2>
+                <button class="btn btn-success" onclick="random1to10()">
+                    Random & Copy
+                </button>
+                <div class="copy-feedback" id="random1Feedback">✅ Đã copy!</div>
+            </div>
+
+            <!-- Random 2 -->
+            <div class="section">
+                <h2>🎰 Random (1975-2002)</h2>
+                <button class="btn btn-warning" onclick="random1975to2002()">
+                    Random & Copy
+                </button>
+                <div class="copy-feedback" id="random2Feedback">✅ Đã copy!</div>
+            </div>
+
+            <!-- Custom String -->
+            <div class="section">
+                <h2>✏️ Chuỗi tùy chỉnh</h2>
+                <div class="input-group">
+                    <input type="text" id="customString" value="DMXFXQD">
+                    <button class="btn btn-info btn-small" onclick="copyCustomString()">
+                        Copy
+                    </button>
+                </div>
+                <div class="copy-feedback" id="customFeedback">✅ Đã copy!</div>
+            </div>
+        </div>
     </div>
-    <div style="font-size:10px;margin-top:4px;color:#666">
-      <input type="checkbox" id="saveKey" checked style="width:auto"> Lưu Key
-      <span style="margin-left:8px">Country US: <b>1</b> | Service: <b>1722</b></span>
-    </div>
-  </div>
-
-  <div id="status" class="status idle">⚡ Nhập API Key và nhấn Kết nối</div>
-
-  <div class="scroll">
-    <div class="box">
-      <h2>📱 Thuê số US - Rips By Triumph</h2>
-      <div class="row">
-        <button class="primary" id="btnRent" onclick="rentPhone()" disabled style="flex:1">📞 Thuê số mới</button>
-        <button class="gray small" id="btnCancel" onclick="cancelOrder()" disabled>❌ Hủy</button>
-      </div>
-
-      <div id="phoneBox" class="display" style="display:none">📱 <span id="phoneText"></span></div>
-      <div id="otpBox" class="display otp waiting">⏳ Chưa có code</div>
-
-      <div class="row" id="otpActions" style="display:none;margin-top:5px">
-        <button class="info small" onclick="copyOTP()" style="flex:1">📋 Copy Code</button>
-        <button class="danger small" id="btnResend" onclick="resendSMS()" style="flex:1">🔄 Gửi lại</button>
-      </div>
-
-      <div id="orderInfo" class="info-line" style="display:none">
-        <span>ID: <b id="orderIdText"></b></span>
-        <span>Hết hạn: <b id="expiresText">N/A</b>s</span>
-        <span>Poll: <b id="pollText">0</b></span>
-      </div>
-
-      <div class="feedback" id="phoneFb">✅ Đã copy số!</div>
-      <div class="feedback" id="otpFb">✅ Đã copy code!</div>
-      <div class="debug" id="debug"></div>
-    </div>
-
-    <div class="box">
-      <h2>🎲 Random 01-10</h2>
-      <button class="success" onclick="random1to10()" style="width:100%">Random & Copy</button>
-      <div class="feedback" id="r1Fb">✅ Đã copy!</div>
-    </div>
-
-    <div class="box">
-      <h2>🎰 Random 1975-2002</h2>
-      <button class="danger" onclick="random1975to2002()" style="width:100%">Random & Copy</button>
-      <div class="feedback" id="r2Fb">✅ Đã copy!</div>
-    </div>
-
-    <div class="box">
-      <h2>✏️ Chuỗi tùy chỉnh</h2>
-      <div class="row">
-        <input id="customText" value="DMXFXQD">
-        <button class="info small" onclick="copyCustomString()">Copy</button>
-      </div>
-      <div class="feedback" id="customFb">✅ Đã copy!</div>
-    </div>
-  </div>
-</div>
-
-<script>
-const BASE_URL = 'https://api.otphub.net/api/v1';
-const COUNTRY_ID = '1';
-const SERVICE_ID = '1722';
-
-let API_KEY = '';
-let currentOrderId = '';
-let currentOTP = '';
-let phoneNumber = '';
-let pollTimer = null;
-let pollCount = 0;
-const MAX_POLL = 120;
-
-const $ = id => document.getElementById(id);
-
-function log(msg, data=null){
-  const line = `[${new Date().toLocaleTimeString()}] ${msg}` + (data ? ' | ' + JSON.stringify(data).slice(0,220) : '');
-  console.log(line, data || '');
-  $('debug').style.display = 'block';
-  $('debug').innerHTML = line + '<br>' + $('debug').innerHTML;
-  $('debug').innerHTML = $('debug').innerHTML.split('<br>').slice(0,16).join('<br>');
-}
-
-function setStatus(text, cls='idle'){
-  $('status').textContent = text;
-  $('status').className = 'status ' + cls;
-}
-
-function apiUrl(endpoint){
-  const joiner = endpoint.includes('?') ? '&' : '?';
-  return `${BASE_URL}${endpoint}${joiner}key=${encodeURIComponent(API_KEY)}`;
-}
-
-async function apiCall(endpoint, method='GET', body=null){
-  if(!API_KEY) throw new Error('Chưa nhập API Key');
-
-  const options = {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY
-    }
-  };
 
-  if(body && method !== 'GET'){
-    options.body = JSON.stringify(body);
-  }
-
-  const url = apiUrl(endpoint);
-  log(`🔄 ${method} ${endpoint}`, body);
-
-  const res = await fetch(url, options);
-  const text = await res.text();
-
-  let data;
-  try {
-    data = JSON.parse(text);
-  } catch(e) {
-    throw new Error(`Response không phải JSON: ${text.slice(0,120)}`);
-  }
-
-  log(`📡 HTTP ${res.status}`, data);
-
-  if(!res.ok){
-    throw new Error(data.message || data.error || `HTTP ${res.status}`);
-  }
-
-  return data;
-}
-
-function connectAPI(){
-  const key = $('apiKey').value.trim();
-  if(!key){
-    setStatus('❌ Vui lòng nhập API Key', 'err');
-    return;
-  }
-
-  API_KEY = key;
-
-  if($('saveKey').checked){
-    localStorage.setItem('otphub_api_key_fixed', API_KEY);
-  } else {
-    localStorage.removeItem('otphub_api_key_fixed');
-  }
-
-  $('btnRent').disabled = false;
-  setStatus('✅ Đã sẵn sàng | US=1 | Rips By Triumph=1722', 'ok');
-  log('✅ Connected locally. Không gọi /services nữa.');
-}
-
-async function rentPhone(){
-  if(!API_KEY){
-    setStatus('❌ Chưa kết nối API Key', 'err');
-    return;
-  }
-
-  stopPolling();
-  resetOrderUI(false);
-
-  $('btnRent').disabled = true;
-  $('btnRent').textContent = '⏳ Đang thuê...';
-
-  try{
-    const body = {
-      country: COUNTRY_ID,
-      service: SERVICE_ID
-    };
-
-    const data = await apiCall('/order', 'POST', body);
-
-    if(!data.success || !data.data || !data.data.order_id){
-      throw new Error(data.message || 'API không trả order_id');
-    }
-
-    currentOrderId = data.data.order_id;
-    phoneNumber = cleanUSPhone(data.data.phone || '');
-
-    $('phoneBox').style.display = 'block';
-    $('phoneText').textContent = phoneNumber || data.data.phone || 'N/A';
-
-    $('orderInfo').style.display = 'flex';
-    $('orderIdText').textContent = currentOrderId;
-    $('expiresText').textContent = data.data.expires_in ?? 'N/A';
-    $('pollText').textContent = '0';
-
-    $('otpBox').textContent = '⏳ Đang chờ code...';
-    $('otpBox').className = 'display otp waiting';
-
-    $('btnCancel').disabled = false;
-    $('btnResend').disabled = false;
-
-    if(phoneNumber){
-      await copyText(phoneNumber);
-      showFeedback('phoneFb');
-    }
-
-    setStatus('✅ Thuê số thành công, đang chờ OTP...', 'ok');
-    log('📞 ORDER CREATED', data.data);
-
-    startPolling();
-
-  }catch(err){
-    setStatus('❌ Lỗi thuê số: ' + err.message, 'err');
-    log('❌ Rent error: ' + err.message);
-    resetOrderUI(true);
-  }finally{
-    $('btnRent').disabled = false;
-    $('btnRent').textContent = '📞 Thuê số mới';
-  }
-}
-
-function cleanUSPhone(phone){
-  let p = String(phone).replace(/\D/g,'');
-  if(p.startsWith('1') && p.length === 11) p = p.slice(1);
-  return p;
-}
-
-function startPolling(){
-  stopPolling();
-  pollCount = 0;
-  currentOTP = '';
-  pollOTP();
-  pollTimer = setInterval(pollOTP, 5000);
-}
-
-async function pollOTP(){
-  if(!currentOrderId) return;
-
-  pollCount++;
-  $('pollText').textContent = pollCount;
-
-  if(pollCount > MAX_POLL){
-    stopPolling();
-    $('otpBox').textContent = '⏰ Hết thời gian chờ';
-    $('otpBox').className = 'display otp waiting';
-    setStatus('⏰ Hết thời gian chờ OTP', 'wait');
-    return;
-  }
-
-  try{
-    const data = await apiCall(`/order/${encodeURIComponent(currentOrderId)}`, 'GET');
-
-    if(!data.success || !data.data) return;
-
-    const d = data.data;
-
-    if(d.expires_in !== undefined){
-      $('expiresText').textContent = d.expires_in;
-    }
-
-    let otp = extractOTP(d);
-
-    log(`🔍 Poll #${pollCount} | status=${d.status} | otp=${otp || 'null'}`);
-
-    if(otp && otp !== currentOTP){
-      currentOTP = otp;
-      $('otpBox').textContent = otp;
-      $('otpBox').className = 'display otp';
-      $('otpActions').style.display = 'flex';
-
-      await copyText(otp);
-      showFeedback('otpFb');
-
-      setStatus('✅ Đã nhận OTP: ' + otp, 'ok');
-      log('🎉 OTP RECEIVED: ' + otp, d);
-
-      if(d.status === 'completed'){
-        stopPolling();
-      }
-    }
-
-    if(d.status === 'completed' && !otp){
-      stopPolling();
-      setStatus('⚠️ Order completed nhưng chưa thấy OTP field', 'wait');
-    }
-
-  }catch(err){
-    log('❌ Poll error: ' + err.message);
-  }
-}
-
-function extractOTP(d){
-  if(d.otp && String(d.otp).trim() && String(d.otp).toLowerCase() !== 'null'){
-    return String(d.otp).trim();
-  }
-
-  if(d.code && String(d.code).trim() && String(d.code).toLowerCase() !== 'null'){
-    return String(d.code).trim();
-  }
-
-  if(d.full_sms){
-    const match = String(d.full_sms).match(/\b(\d{4,8})\b/);
-    if(match) return match[1];
-  }
-
-  return '';
-}
-
-async function cancelOrder(){
-  if(!currentOrderId) return;
-
-  try{
-    const oid = currentOrderId;
-    const data = await apiCall(`/order/${encodeURIComponent(oid)}/cancel`, 'POST');
-
-    stopPolling();
-    resetOrderUI(true);
-
-    const refund = data.data?.refunded_amount ?? data.refunded_amount ?? '?';
-    setStatus('✅ Đã hủy order. Refund: ' + refund, 'ok');
-    log('✅ Cancel success', data);
-
-  }catch(err){
-    setStatus('❌ Lỗi hủy: ' + err.message, 'err');
-    log('❌ Cancel error: ' + err.message);
-  }
-}
-
-async function resendSMS(){
-  if(!currentOrderId) return;
-
-  $('btnResend').disabled = true;
-  $('btnResend').textContent = '⏳...';
-
-  try{
-    const data = await apiCall(`/order/${encodeURIComponent(currentOrderId)}/resend`, 'POST');
-
-    currentOTP = '';
-    pollCount = 0;
-    $('otpBox').textContent = '⏳ Đang chờ code...';
-    $('otpBox').className = 'display otp waiting';
-    $('otpActions').style.display = 'none';
-
-    setStatus('✅ Đã yêu cầu gửi lại SMS', 'ok');
-    log('🔄 Resend success', data);
-
-    startPolling();
-
-  }catch(err){
-    setStatus('❌ Lỗi gửi lại: ' + err.message, 'err');
-    log('❌ Resend error: ' + err.message);
-  }finally{
-    $('btnResend').disabled = false;
-    $('btnResend').textContent = '🔄 Gửi lại';
-  }
-}
-
-function stopPolling(){
-  if(pollTimer){
-    clearInterval(pollTimer);
-    pollTimer = null;
-    log('⏹️ Stop polling');
-  }
-}
-
-function resetOrderUI(clearAll=true){
-  if(clearAll){
-    currentOrderId = '';
-    currentOTP = '';
-    phoneNumber = '';
-  }
-
-  $('phoneBox').style.display = 'none';
-  $('orderInfo').style.display = 'none';
-  $('otpActions').style.display = 'none';
-
-  $('otpBox').textContent = '⏳ Chưa có code';
-  $('otpBox').className = 'display otp waiting';
-
-  $('btnCancel').disabled = true;
-  $('btnResend').disabled = true;
-}
-
-async function copyOTP(){
-  if(currentOTP){
-    await copyText(currentOTP);
-    showFeedback('otpFb');
-  }
-}
-
-async function random1to10(){
-  const n = Math.floor(Math.random() * 10) + 1;
-  await copyText(String(n).padStart(2,'0'));
-  showFeedback('r1Fb');
-}
-
-async function random1975to2002(){
-  const n = Math.floor(Math.random() * (2002 - 1975 + 1)) + 1975;
-  await copyText(String(n));
-  showFeedback('r2Fb');
-}
-
-async function copyCustomString(){
-  const str = $('customText').value.trim();
-  if(!str) return;
-  await copyText(str);
-  showFeedback('customFb');
-}
-
-async function copyText(text){
-  try{
-    await navigator.clipboard.writeText(text);
-  }catch(e){
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.focus();
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-  }
-}
-
-function showFeedback(id){
-  const el = $(id);
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 1200);
-}
-
-$('apiKey').addEventListener('keypress', e => {
-  if(e.key === 'Enter') connectAPI();
-});
-
-$('saveKey').addEventListener('change', () => {
-  if($('saveKey').checked && API_KEY){
-    localStorage.setItem('otphub_api_key_fixed', API_KEY);
-  }else{
-    localStorage.removeItem('otphub_api_key_fixed');
-  }
-});
-
-window.addEventListener('beforeunload', stopPolling);
-
-(function init(){
-  const saved = localStorage.getItem('otphub_api_key_fixed');
-  if(saved){
-    $('apiKey').value = saved;
-    $('saveKey').checked = true;
-  }
-  log('🚀 Tool started | Fixed API: country=1 service=1722');
-})();
-</script>
+    <script>
+        // ============ CONFIG ============
+        const BASE_URL = 'https://api.otphub.net/api/v1';
+        const COUNTRY_US = '1'; // ID cho US
+        const SERVICE_TRUMP_ID = '1722'; // ID cho Rips By TriumPh - fallback cứng
+        const SERVICE_TRUMP_NAME = 'Rips By TriumPh';
+        
+        // ============ STATE ============
+        let API_KEY = '';
+        let SERVICE_TRUMP = SERVICE_TRUMP_ID; // Mặc định dùng ID cứng
+        let currentOrderId = null;
+        let pollInterval = null;
+        let pollCount = 0;
+        let maxPollCount = 120; // 10 phút = 120 lần * 5s
+        let phoneNumber = '';
+        let currentOTP = '';
+        let otpReceived = false;
+        let useProxy = false;
+        
+        // ============ DOM ============
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const rememberCheck = document.getElementById('rememberKey');
+        const apiStatus = document.getElementById('apiStatus');
+        const btnRentPhone = document.getElementById('btnRentPhone');
+        const btnCancelOrder = document.getElementById('btnCancelOrder');
+        const btnResend = document.getElementById('btnResend');
+        const btnConnect = document.getElementById('btnConnect');
+        const otpDisplay = document.getElementById('otpDisplay');
+        const otpActions = document.getElementById('otpActions');
+        const modeSelect = document.getElementById('modeSelect');
+        const debugPanel = document.getElementById('debugPanel');
+
+        // ============ DEBUG ============
+        function logDebug(msg, data = null) {
+            const time = new Date().toLocaleTimeString();
+            let logMsg = `[${time}] ${msg}`;
+            
+            if (data) {
+                try {
+                    logMsg += ' | ' + JSON.stringify(data).substring(0, 200);
+                } catch(e) {}
+            }
+            
+            console.log(logMsg, data || '');
+            debugPanel.style.display = 'block';
+            debugPanel.innerHTML = logMsg + '<br>' + debugPanel.innerHTML;
+            
+            // Giới hạn 15 dòng
+            const lines = debugPanel.innerHTML.split('<br>');
+            if (lines.length > 15) {
+                debugPanel.innerHTML = lines.slice(0, 15).join('<br>');
+            }
+        }
+
+        // ============ INIT ============
+        function loadSavedKey() {
+            const saved = localStorage.getItem('otphub_api_key_v2');
+            if (saved) {
+                apiKeyInput.value = saved;
+                rememberCheck.checked = true;
+                logDebug('📂 Loaded saved API Key');
+            }
+        }
+
+        function saveSettings() {
+            if (rememberCheck.checked && API_KEY) {
+                localStorage.setItem('otphub_api_key_v2', API_KEY);
+                logDebug('💾 API Key saved');
+            } else {
+                localStorage.removeItem('otphub_api_key_v2');
+                logDebug('🗑️ API Key removed from storage');
+            }
+        }
+
+        // ============ CONNECT ============
+        async function connectAPI() {
+            const key = apiKeyInput.value.trim();
+            if (!key) {
+                apiStatus.textContent = '❌ Vui lòng nhập API Key';
+                apiStatus.className = 'api-status error';
+                return;
+            }
+            
+            API_KEY = key;
+            useProxy = modeSelect.value === 'proxy';
+            saveSettings();
+            
+            btnConnect.disabled = true;
+            btnConnect.innerHTML = '<span class="loader loader-dark"></span>';
+            btnRentPhone.disabled = true;
+            
+            // Reset về ID cứng, sẽ cập nhật nếu tìm thấy qua API
+            SERVICE_TRUMP = SERVICE_TRUMP_ID;
+            
+            apiStatus.innerHTML = '<span class="loader loader-dark"></span> Đang kết nối...';
+            apiStatus.className = 'api-status loading';
+            
+            logDebug('🔌 Connecting | Mode: ' + (useProxy ? 'PROXY' : 'DIRECT') + ' | Key: ' + key.substring(0, 8) + '...');
+            
+            try {
+                const data = await apiCall('/services', 'GET');
+                
+                logDebug('📡 Services response success: ' + data.success);
+                
+                if (data.success && data.data && Array.isArray(data.data)) {
+                    logDebug(`📋 Found ${data.data.length} services from API`);
+                    
+                    // Tìm service chính xác
+                    const trumpService = findTrumpService(data.data);
+                    
+                    if (trumpService) {
+                        SERVICE_TRUMP = String(trumpService.ID);
+                        apiStatus.textContent = `✅ ${trumpService.name} (ID: ${SERVICE_TRUMP})`;
+                        apiStatus.className = 'api-status success';
+                        btnRentPhone.disabled = false;
+                        logDebug('✅ Service found via API: ' + trumpService.name, {id: SERVICE_TRUMP});
+                    } else {
+                        // Không tìm thấy, dùng ID cứng
+                        apiStatus.textContent = `⚠️ Dùng ID cứng: ${SERVICE_TRUMP_ID} (không tìm thấy qua API)`;
+                        apiStatus.className = 'api-status loading';
+                        btnRentPhone.disabled = false;
+                        logDebug('⚠️ Service not found in API list, using hardcoded ID: ' + SERVICE_TRUMP_ID);
+                        
+                        // Log các service liên quan để debug
+                        const trumpRelated = data.data.filter(s => 
+                            s.name && (
+                                s.name.toLowerCase().includes('trump') || 
+                                s.name.toLowerCase().includes('rips') || 
+                                s.name.toLowerCase().includes('triumph')
+                            )
+                        );
+                        if (trumpRelated.length > 0) {
+                            logDebug('🔍 Related services found:', trumpRelated.map(s => s.ID + ':' + s.name));
+                        } else {
+                            logDebug('🔍 No related services found. First 10 services:', data.data.slice(0, 10).map(s => s.ID + ':' + s.name));
+                        }
+                    }
+                } else {
+                    // API không trả về data đúng format, dùng ID cứng
+                    logDebug('⚠️ Invalid services response structure, using hardcoded ID');
+                    apiStatus.textContent = `⚠️ Dùng ID cứng: ${SERVICE_TRUMP_ID}`;
+                    apiStatus.className = 'api-status loading';
+                    btnRentPhone.disabled = false;
+                }
+            } catch (error) {
+                // Lỗi kết nối, vẫn cho phép dùng ID cứng
+                logDebug('❌ Connect error: ' + error.message);
+                apiStatus.textContent = `⚠️ Dùng ID cứng: ${SERVICE_TRUMP_ID} (lỗi API: ${error.message.substring(0, 30)})`;
+                apiStatus.className = 'api-status error';
+                btnRentPhone.disabled = false;
+            } finally {
+                btnConnect.disabled = false;
+                btnConnect.innerHTML = 'Kết nối';
+            }
+        }
+
+        // ============ API CALL ============
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            if (!API_KEY) throw new Error('Chưa có API Key');
+            
+            let url = `${BASE_URL}${endpoint}`;
+            const headers = {
+                'Content-Type': 'application/json',
+                'x-api-key': API_KEY
+            };
+            
+            // Với GET request, thêm key vào URL (theo docs mới)
+            if (method === 'GET') {
+                const separator = url.includes('?') ? '&' : '?';
+                url += `${separator}key=${encodeURIComponent(API_KEY)}`;
+            }
+            
+            const fetchOptions = {
+                method: method,
+                headers: headers
+            };
+            
+            if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+                fetchOptions.body = JSON.stringify(body);
+            }
+            
+            logDebug(`🔄 ${method} ${endpoint}`, body);
+            
+            if (useProxy) {
+                return await callViaProxy(url, fetchOptions, method);
+            } else {
+                return await callDirect(url, fetchOptions, method);
+            }
+        }
+        
+        async function callDirect(url, fetchOptions, method) {
+            logDebug('🔗 Direct: ' + method + ' ' + url.substring(0, 100));
+            
+            try {
+                const response = await fetch(url, fetchOptions);
+                
+                logDebug('📡 Response status: ' + response.status);
+                
+                // Đọc response text trước
+                const responseText = await response.text();
+                let data;
+                
+                try {
+                    data = JSON.parse(responseText);
+                } catch (e) {
+                    logDebug('⚠️ Response is not JSON: ' + responseText.substring(0, 100));
+                    throw new Error(`Server trả về không phải JSON (HTTP ${response.status})`);
+                }
+                
+                if (!response.ok) {
+                    logDebug('❌ HTTP Error ' + response.status, data);
+                    throw new Error(data.message || `HTTP ${response.status}: ${responseText.substring(0, 100)}`);
+                }
+                
+                logDebug('✅ Direct success', { success: data.success });
+                return data;
+                
+            } catch (error) {
+                // Nếu lỗi network/CORS, thử proxy
+                if (error.message.includes('Failed to fetch') || 
+                    error.message.includes('NetworkError') ||
+                    error.name === 'TypeError') {
+                    logDebug('⚠️ Direct failed (CORS/Network), auto-fallback to proxy...');
+                    useProxy = true;
+                    modeSelect.value = 'proxy';
+                    return await callViaProxy(url, fetchOptions, method);
+                }
+                throw error;
+            }
+        }
+        
+        async function callViaProxy(url, fetchOptions, method) {
+            const proxies = [
+                { 
+                    name: 'allorigins', 
+                    url: 'https://api.allorigins.win/raw?url=',
+                    process: (u) => u
+                },
+                { 
+                    name: 'corsproxy', 
+                    url: 'https://corsproxy.io/?',
+                    process: (u) => u
+                },
+                { 
+                    name: 'codetabs', 
+                    url: 'https://api.codetabs.com/v1/proxy?quest=',
+                    process: (u) => u
+                }
+            ];
+            
+            for (let proxy of proxies) {
+                try {
+                    const proxyUrl = proxy.url + encodeURIComponent(url);
+                    logDebug('🔄 Trying proxy: ' + proxy.name);
+                    
+                    // Proxy thường chỉ hỗ trợ GET tốt
+                    // Với POST, thử gửi qua proxy với method gốc
+                    const proxyFetchOptions = {
+                        method: method,
+                        headers: {}
+                    };
+                    
+                    // Copy body nếu có
+                    if (fetchOptions.body) {
+                        proxyFetchOptions.body = fetchOptions.body;
+                        proxyFetchOptions.headers['Content-Type'] = 'application/json';
+                    }
+                    
+                    const response = await fetch(proxyUrl, proxyFetchOptions);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    
+                    const responseText = await response.text();
+                    let data;
+                    try {
+                        data = JSON.parse(responseText);
+                    } catch (e) {
+                        throw new Error('Proxy response is not JSON');
+                    }
+                    
+                    logDebug('✅ Proxy success: ' + proxy.name);
+                    return data;
+                    
+                } catch (error) {
+                    logDebug('❌ Proxy ' + proxy.name + ' failed: ' + error.message);
+                }
+            }
+            
+            throw new Error('Tất cả proxy đều thất bại. Hãy thử: Dùng VPN, đổi mạng, hoặc thử lại sau.');
+        }
+
+        // ============ FIND SERVICE ============
+        function findTrumpService(services) {
+            if (!Array.isArray(services)) return null;
+            
+            // Tìm theo ID chính xác trước
+            const byId = services.find(s => String(s.ID) === SERVICE_TRUMP_ID);
+            if (byId) {
+                logDebug('🎯 Found service by ID: ' + SERVICE_TRUMP_ID);
+                return byId;
+            }
+            
+            // Tìm theo tên chính xác
+            const exactNames = [
+                'Rips By TriumPh',
+                'rips by triumph',
+                'RIPS BY TRIUMPH',
+                'Rips By Triumph'
+            ];
+            
+            for (let name of exactNames) {
+                const found = services.find(s => s.name === name);
+                if (found) {
+                    logDebug('🎯 Found service by exact name: ' + name);
+                    return found;
+                }
+            }
+            
+            // Tìm chứa cả "rips" và "triumph"
+            let service = services.find(s => 
+                s.name && 
+                s.name.toLowerCase().includes('rips') && 
+                s.name.toLowerCase().includes('triumph')
+            );
+            if (service) {
+                logDebug('🎯 Found service by rips+triumph: ' + service.name);
+                return service;
+            }
+            
+            // Tìm chứa "triumph"
+            service = services.find(s => s.name && s.name.toLowerCase().includes('triumph'));
+            if (service) {
+                logDebug('🎯 Found service by triumph: ' + service.name);
+                return service;
+            }
+            
+            // Tìm chứa "rips"
+            service = services.find(s => s.name && s.name.toLowerCase().includes('rips'));
+            if (service) {
+                logDebug('🎯 Found service by rips: ' + service.name);
+                return service;
+            }
+            
+            // Tìm chứa "trump"
+            service = services.find(s => s.name && s.name.toLowerCase().includes('trump'));
+            if (service) {
+                logDebug('🎯 Found service by trump: ' + service.name);
+                return service;
+            }
+            
+            return null;
+        }
+
+        // ============ ORDER ACTIONS ============
+        async function cancelOrder() {
+            if (!currentOrderId) return;
+            
+            logDebug('🛑 Cancelling order: ' + currentOrderId);
+            
+            btnCancelOrder.disabled = true;
+            btnCancelOrder.innerHTML = '<span class="loader"></span>';
+            
+            try {
+                const data = await apiCall(`/order/${currentOrderId}/cancel`, 'POST');
+                logDebug('Cancel response:', data);
+                
+                stopPolling();
+                resetOrderUI();
+                
+                if (data.success) {
+                    const refund = data.data?.refunded_amount || '?';
+                    apiStatus.textContent = '✅ Đã hủy, hoàn: ' + refund + ' VND';
+                    apiStatus.className = 'api-status success';
+                    logDebug('💰 Refund: ' + refund + ' VND');
+                } else {
+                    apiStatus.textContent = '⚠️ Đã hủy (không có refund)';
+                    apiStatus.className = 'api-status idle';
+                }
+            } catch (error) {
+                logDebug('❌ Cancel error: ' + error.message);
+                // Vẫn reset UI nếu có lỗi
+                stopPolling();
+                resetOrderUI();
+                apiStatus.textContent = '⚠️ Lỗi hủy: ' + error.message.substring(0, 40);
+                apiStatus.className = 'api-status error';
+            } finally {
+                btnCancelOrder.disabled = true;
+                btnCancelOrder.innerHTML = '❌ Hủy';
+            }
+        }
+
+        async function resendSMS() {
+            if (!currentOrderId) return;
+            
+            logDebug('🔄 Resending SMS for order: ' + currentOrderId);
+            
+            btnResend.disabled = true;
+            btnResend.innerHTML = '<span class="loader"></span>';
+            
+            try {
+                const data = await apiCall(`/order/${currentOrderId}/resend`, 'POST');
+                logDebug('Resend response:', data);
+                
+                if (data.success) {
+                    // Reset trạng thái chờ OTP
+                    otpReceived = false;
+                    currentOTP = '';
+                    pollCount = 0;
+                    
+                    otpDisplay.textContent = '⏳ Đang chờ code...';
+                    otpDisplay.className = 'otp-display waiting';
+                    otpActions.style.display = 'none';
+                    
+                    // Cập nhật số lần resend
+                    const resends = data.data?.resends || '?';
+                    document.getElementById('resendCount').textContent = resends;
+                    
+                    logDebug('✅ Resend success, restarting poll');
+                    
+                    // Bắt đầu poll lại
+                    startPolling();
+                } else {
+                    throw new Error(data.message || 'Resend thất bại');
+                }
+            } catch (error) {
+                logDebug('❌ Resend error: ' + error.message);
+                alert('Lỗi gửi lại: ' + error.message);
+            } finally {
+                btnResend.disabled = false;
+                btnResend.innerHTML = '🔄 Gửi lại';
+            }
+        }
+
+        async function rentPhone() {
+            if (!API_KEY) {
+                alert('Vui lòng nhập API Key và nhấn Kết nối trước!');
+                return;
+            }
+            
+            // Hủy order cũ nếu có
+            if (currentOrderId) {
+                logDebug('⚠️ Có order cũ, đang hủy...');
+                stopPolling();
+                try { 
+                    await apiCall(`/order/${currentOrderId}/cancel`, 'POST');
+                } catch (e) {
+                    logDebug('Cancel old order failed (ignored): ' + e.message);
+                }
+                resetOrderUI();
+            }
+
+            btnRentPhone.disabled = true;
+            btnRentPhone.innerHTML = '<span class="loader"></span> Đang thuê...';
+            
+            logDebug('📞 Renting phone...');
+            logDebug('📋 Params: country=' + COUNTRY_US + ', service=' + SERVICE_TRUMP);
+            
+            try {
+                const orderBody = {
+                    country: COUNTRY_US,
+                    service: SERVICE_TRUMP
+                };
+                
+                logDebug('📤 POST /order body:', orderBody);
+                
+                const data = await apiCall('/order', 'POST', orderBody);
+                
+                logDebug('📥 Order response FULL:', data);
+                
+                // Kiểm tra response có order_id không
+                if (data.success && data.data && data.data.order_id) {
+                    // Xử lý số điện thoại - bỏ mã quốc gia +1
+                    let rawPhone = data.data.phone || '';
+                    phoneNumber = rawPhone.replace(/\D/g, '');
+                    
+                    // Bỏ prefix 1 nếu có
+                    if (phoneNumber.startsWith('1') && phoneNumber.length > 10) {
+                        phoneNumber = phoneNumber.substring(1);
+                    }
+                    
+                    currentOrderId = data.data.order_id;
+                    otpReceived = false;
+                    currentOTP = '';
+                    pollCount = 0;
+                    
+                    // Hiển thị UI
+                    document.getElementById('phoneDisplay').style.display = 'block';
+                    document.getElementById('phoneNumber').textContent = phoneNumber;
+                    document.getElementById('rentalInfo').style.display = 'flex';
+                    document.getElementById('orderIdInfo').textContent = currentOrderId;
+                    document.getElementById('expiresInfo').textContent = data.data.expires_in || 'N/A';
+                    document.getElementById('resendCount').textContent = '0';
+                    
+                    otpDisplay.textContent = '⏳ Đang chờ code...';
+                    otpDisplay.className = 'otp-display waiting';
+                    otpActions.style.display = 'none';
+                    
+                    btnCancelOrder.disabled = false;
+                    btnResend.disabled = false;
+                    
+                    // Tự động copy số điện thoại
+                    try {
+                        await navigator.clipboard.writeText(phoneNumber);
+                        showFeedback('phoneFeedback');
+                        logDebug('📋 Phone copied: ' + phoneNumber);
+                    } catch (e) {
+                        logDebug('⚠️ Copy failed: ' + e.message);
+                    }
+                    
+                    logDebug('✅ ORDER CREATED', {
+                        order_id: currentOrderId,
+                        phone: phoneNumber,
+                        expires_in: data.data.expires_in,
+                        status: data.data.status
+                    });
+                    
+                    // Bắt đầu poll OTP
+                    startPolling();
+                    
+                } else {
+                    logDebug('❌ Order failed - no order_id in response:', data);
+                    throw new Error(data.message || 'Không thể thuê số - Response không có order_id');
+                }
+            } catch (error) {
+                logDebug('❌ Rent error: ' + error.message);
+                alert('❌ Lỗi thuê số:\n\n' + error.message + '\n\nKiểm tra Debug Log để biết chi tiết.');
+                resetOrderUI();
+            } finally {
+                btnRentPhone.disabled = false;
+                btnRentPhone.innerHTML = '📞 Thuê số mới';
+            }
+        }
+
+        // ============ POLL OTP ============
+        function startPolling() {
+            stopPolling();
+            pollCount = 0;
+            otpReceived = false;
+            
+            logDebug('🔄 Starting OTP poll | Order: ' + currentOrderId + ' | Interval: 5s | Max: ' + maxPollCount);
+            
+            // Poll ngay lập tức lần đầu
+            pollOTP();
+            
+            pollInterval = setInterval(() => {
+                if (!otpReceived && currentOrderId) {
+                    pollOTP();
+                } else if (otpReceived) {
+                    stopPolling();
+                }
+            }, 5000);
+        }
+
+        async function pollOTP() {
+            if (!currentOrderId || otpReceived) return;
+            
+            pollCount++;
+            
+            if (pollCount > maxPollCount) {
+                stopPolling();
+                otpDisplay.textContent = '⏰ Hết thời gian chờ';
+                otpDisplay.className = 'otp-display waiting';
+                logDebug('⏰ Poll timeout after ' + maxPollCount + ' attempts (~10 phút)');
+                apiStatus.textContent = '⏰ Hết thời gian chờ OTP';
+                apiStatus.className = 'api-status error';
+                return;
+            }
+            
+            try {
+                const data = await apiCall(`/order/${currentOrderId}`, 'GET');
+                
+                if (data.success && data.data) {
+                    // Cập nhật expires
+                    if (data.data.expires_in !== undefined) {
+                        document.getElementById('expiresInfo').textContent = data.data.expires_in;
+                    }
+                    
+                    // Log mỗi 6 lần (30s) để tránh spam
+                    if (pollCount % 6 === 0 || pollCount === 1) {
+                        logDebug(`📊 Poll #${pollCount}`, {
+                            status: data.data.status,
+                            otp: data.data.otp,
+                            expires: data.data.expires_in
+                        });
+                    }
+                    
+                    // Kiểm tra OTP - ưu tiên field "otp"
+                    let otpValue = null;
+                    
+                    if (data.data.otp && 
+                        String(data.data.otp).trim().length > 0 && 
+                        String(data.data.otp).trim().toLowerCase() !== 'null') {
+                        otpValue = String(data.data.otp).trim();
+                    }
+                    // Fallback: kiểm tra field "code"
+                    else if (data.data.code && 
+                             String(data.data.code).trim().length > 0 && 
+                             String(data.data.code).trim().toLowerCase() !== 'null') {
+                        otpValue = String(data.data.code).trim();
+                    }
+                    // Fallback: extract từ full_sms
+                    else if (data.data.full_sms && 
+                             String(data.data.full_sms).trim().length > 0) {
+                        const smsText = String(data.data.full_sms);
+                        // Tìm dãy số 4-8 chữ số
+                        const match = smsText.match(/\b(\d{4,8})\b/);
+                        if (match) {
+                            otpValue = match[1];
+                            logDebug('🔍 Extracted OTP from SMS text');
+                        }
+                    }
+                    
+                    // Nếu có OTP mới, hiển thị
+                    if (otpValue && otpValue !== currentOTP) {
+                        currentOTP = otpValue;
+                        otpReceived = true;
+                        
+                        otpDisplay.textContent = otpValue;
+                        otpDisplay.className = 'otp-display';
+                        otpActions.style.display = 'flex';
+                        
+                        logDebug('🎉🎉 OTP RECEIVED!', {
+                            otp: otpValue,
+                            status: data.data.status,
+                            poll_count: pollCount
+                        });
+                        
+                        // Tự động copy OTP
+                        try {
+                            await navigator.clipboard.writeText(otpValue);
+                            showFeedback('otpFeedback');
+                            logDebug('📋 OTP auto-copied');
+                        } catch (e) {
+                            logDebug('⚠️ OTP copy failed: ' + e.message);
+                        }
+                        
+                        apiStatus.textContent = '🎉 OTP: ' + otpValue;
+                        apiStatus.className = 'api-status success';
+                        
+                        // Nếu status completed, dừng poll
+                        if (data.data.status === 'completed') {
+                            stopPolling();
+                            logDebug('✅ Order completed, poll stopped');
+                        }
+                    }
+                } else {
+                    if (pollCount % 6 === 0) {
+                        logDebug('⚠️ Poll response không có data', data);
+                    }
+                }
+            } catch (error) {
+                if (pollCount % 6 === 0) {
+                    logDebug('❌ Poll #' + pollCount + ' error: ' + error.message);
+                }
+            }
+        }
+
+        function stopPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+                logDebug('⏹️ Polling stopped');
+            }
+        }
+
+        function resetOrderUI() {
+            stopPolling();
+            currentOrderId = null;
+            currentOTP = '';
+            phoneNumber = '';
+            otpReceived = false;
+            pollCount = 0;
+            
+            document.getElementById('phoneDisplay').style.display = 'none';
+            document.getElementById('rentalInfo').style.display = 'none';
+            document.getElementById('orderIdInfo').textContent = '';
+            document.getElementById('expiresInfo').textContent = '';
+            document.getElementById('resendCount').textContent = '0';
+            
+            otpDisplay.textContent = '⏳ Chưa có code';
+            otpDisplay.className = 'otp-display waiting';
+            otpActions.style.display = 'none';
+            
+            btnCancelOrder.disabled = true;
+            btnResend.disabled = true;
+            
+            logDebug('🔄 UI reset');
+        }
+
+        // ============ COPY FUNCTIONS ============
+        async function copyPhone() {
+            if (phoneNumber) {
+                try {
+                    await navigator.clipboard.writeText(phoneNumber);
+                    showFeedback('phoneFeedback');
+                } catch (e) {
+                    fallbackCopy(phoneNumber);
+                    showFeedback('phoneFeedback');
+                }
+            }
+        }
+
+        async function copyOTP() {
+            if (currentOTP) {
+                try {
+                    await navigator.clipboard.writeText(currentOTP);
+                    showFeedback('otpFeedback');
+                } catch (e) {
+                    fallbackCopy(currentOTP);
+                    showFeedback('otpFeedback');
+                }
+            }
+        }
+
+        async function random1to10() {
+            const num = Math.floor(Math.random() * 10) + 1;
+            const formatted = num.toString().padStart(2, '0');
+            await copyToClipboard(formatted);
+            showFeedback('random1Feedback');
+            logDebug('🎲 Random 1-10: ' + formatted);
+        }
+
+        async function random1975to2002() {
+            const num = Math.floor(Math.random() * (2002 - 1975 + 1)) + 1975;
+            const formatted = num.toString();
+            await copyToClipboard(formatted);
+            showFeedback('random2Feedback');
+            logDebug('🎰 Random 1975-2002: ' + formatted);
+        }
+
+        async function copyCustomString() {
+            const str = document.getElementById('customString').value.trim();
+            if (str) {
+                await copyToClipboard(str);
+                showFeedback('customFeedback');
+                logDebug('✏️ Copied custom: ' + str.substring(0, 20));
+            }
+        }
+
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch (err) {
+                fallbackCopy(text);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            textarea.style.pointerEvents = 'none';
+            document.body.appendChild(textarea);
+            textarea.select();
+            textarea.setSelectionRange(0, 99999);
+            try {
+                document.execCommand('copy');
+            } catch (e) {
+                logDebug('❌ Fallback copy failed');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function showFeedback(elementId) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.classList.add('show');
+                setTimeout(() => el.classList.remove('show'), 1200);
+            }
+        }
+
+        // ============ EVENTS ============
+        modeSelect.addEventListener('change', () => {
+            useProxy = modeSelect.value === 'proxy';
+            logDebug('🔀 Mode changed: ' + (useProxy ? 'PROXY' : 'DIRECT'));
+        });
+
+        rememberCheck.addEventListener('change', () => {
+            saveSettings();
+        });
+
+        apiKeyInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                connectAPI();
+            }
+        });
+
+        // Cleanup khi đóng trang
+        window.addEventListener('beforeunload', () => {
+            stopPolling();
+        });
+
+        // Cleanup khi visibility change (app bị ẩn)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                logDebug('👁️ App hidden, poll continues');
+            }
+        });
+
+        // ============ START ============
+        loadSavedKey();
+        useProxy = modeSelect.value === 'proxy';
+        logDebug('🚀 OTP Hub Tool v2 started');
+        logDebug('⚙️ Config: Country=US(1), Service=Rips By TriumPh(' + SERVICE_TRUMP_ID + '), Mode=' + (useProxy ? 'PROXY' : 'DIRECT'));
+        logDebug('💡 Auto-fallback: Direct → Proxy nếu lỗi CORS');
+        logDebug('💡 Service fallback: API → Hardcoded ID ' + SERVICE_TRUMP_ID);
+    </script>
 </body>
 </html>
