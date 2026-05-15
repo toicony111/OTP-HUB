@@ -1,932 +1,494 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>OTP Hub Tool v2</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-        }
-
-        .container {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-            width: 100%;
-            max-width: 400px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        h1 {
-            text-align: center;
-            color: #667eea;
-            font-size: 24px;
-            font-weight: 700;
-        }
-
-        .section {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 12px;
-            border: 1px solid #e9ecef;
-        }
-
-        .section-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #495057;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        input[type="password"],
-        input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: all 0.3s;
-            background: white;
-        }
-
-        input[type="password"]:focus,
-        input[type="text"]:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .api-row {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .api-row input {
-            flex: 1;
-            min-width: 150px;
-        }
-
-        button {
-            padding: 10px 16px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            justify-content: center;
-            white-space: nowrap;
-        }
-
-        button:active {
-            transform: scale(0.98);
-            opacity: 0.8;
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            flex: 1;
-        }
-
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-danger {
-            background: #ff6b6b;
-            color: white;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-info {
-            background: #17a2b8;
-            color: white;
-        }
-
-        .btn-random-green {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-random-red {
-            background: #dc3545;
-            color: white;
-        }
-
-        .phone-display {
-            background: white;
-            border: 2px solid #667eea;
-            border-radius: 8px;
-            padding: 12px;
-            text-align: center;
-            font-size: 20px;
-            font-weight: 700;
-            color: #333;
-            letter-spacing: 1px;
-            margin: 8px 0;
-            cursor: pointer;
-            transition: all 0.2s;
-            word-break: break-all;
-        }
-
-        .phone-display:active {
-            background: #f0f0ff;
-        }
-
-        .otp-display {
-            background: white;
-            border: 2px solid #ffc107;
-            border-radius: 8px;
-            padding: 12px;
-            text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-            letter-spacing: 2px;
-            margin: 8px 0;
-            min-height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #333;
-            word-break: break-all;
-        }
-
-        .otp-waiting {
-            color: #6c757d;
-            font-weight: 400;
-        }
-
-        .otp-timeout {
-            color: #dc3545;
-            font-weight: 400;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: #6c757d;
-            margin: 4px 0;
-        }
-
-        .checkbox-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: #495057;
-        }
-
-        select {
-            padding: 8px 12px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 13px;
-            background: white;
-            flex: 1;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .status-connected {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status-disconnected {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .debug-panel {
-            background: #1a1a1a;
-            color: #00ff00;
-            font-family: monospace;
-            font-size: 8px;
-            padding: 8px;
-            border-radius: 8px;
-            max-height: 80px;
-            overflow-y: auto;
-            line-height: 1.4;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-
-        .feedback-toast {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 13px;
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-        }
-
-        .feedback-toast.show {
-            opacity: 1;
-        }
-
-        .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .button-row {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .button-row button {
-            flex: 1;
-            min-width: 80px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>OTP Hub Tool Fixed</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#667eea,#764ba2)}
+body{display:flex;justify-content:center;align-items:center;padding:4px}
+.container{background:#fff;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.2);padding:8px;max-width:400px;width:100%;height:100vh;display:flex;flex-direction:column;gap:5px}
+h1{text-align:center;font-size:16px;color:#333}
+.box{background:#f8f9fa;border:1px solid #ddd;border-radius:6px;padding:7px}
+.row{display:flex;gap:4px}
+input,select{padding:6px;border:2px solid #ddd;border-radius:4px;font-size:12px}
+input{flex:1}
+button{border:0;border-radius:4px;padding:7px;color:#fff;font-weight:700;font-size:11px;cursor:pointer}
+button:disabled{opacity:.5;pointer-events:none}
+button:active{transform:scale(.98);opacity:.85}
+.primary{background:linear-gradient(135deg,#667eea,#764ba2)}
+.success{background:#28a745}
+.danger{background:#ff6b6b}
+.info{background:#17a2b8}
+.gray{background:#6c757d}
+.status{font-size:10px;text-align:center;padding:5px;border-radius:4px}
+.idle{background:#e2e3e5;color:#383d41}
+.ok{background:#d4edda;color:#155724}
+.err{background:#f8d7da;color:#721c24}
+.wait{background:#fff3cd;color:#856404}
+.scroll{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:5px}
+h2{font-size:11px;color:#555;margin-bottom:5px}
+.display{background:#fff;border:2px solid #667eea;border-radius:4px;padding:7px;text-align:center;font-weight:700;font-size:14px;word-break:break-all;margin-top:5px}
+.otp{border-color:#ffc107;font-size:17px;letter-spacing:2px;min-height:38px;display:flex;align-items:center;justify-content:center}
+.otp.waiting{font-size:11px;color:#888;font-weight:400;letter-spacing:0}
+.feedback{height:14px;text-align:center;font-size:9px;color:#28a745;opacity:0;transition:.25s}
+.feedback.show{opacity:1}
+.info-line{display:flex;justify-content:space-between;gap:4px;flex-wrap:wrap;background:#fff3cd;border:1px solid #ffc107;color:#856404;border-radius:4px;font-size:9px;padding:4px;margin-top:5px}
+.debug{display:none;background:#111;color:#00ff00;font-family:monospace;font-size:8px;line-height:1.4;max-height:90px;overflow:auto;padding:5px;border-radius:4px;margin-top:5px}
+.small{padding:6px;font-size:10px}
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>📱 OTP Hub Tool v2</h1>
+<div class="container">
+  <h1>🔧 OTP Hub Tool Fixed</h1>
 
-        <!-- API Key Section -->
-        <div class="section">
-            <div class="section-title">🔐 API Key</div>
-            <div class="api-row">
-                <input type="password" id="apiKeyInput" placeholder="Nhập API Key...">
-                <button class="btn-primary" id="connectBtn" onclick="connectAPI()">
-                    <span id="connectBtnText">🔌 Kết nối</span>
-                </button>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
-                <div class="checkbox-row">
-                    <input type="checkbox" id="saveKeyCheckbox">
-                    <label for="saveKeyCheckbox">💾 Lưu Key</label>
-                </div>
-                <select id="modeSelect" onchange="updateMode()">
-                    <option value="direct">Direct API</option>
-                    <option value="proxy">CORS Proxy</option>
-                </select>
-                <span id="statusBadge" class="status-badge status-disconnected">Chưa kết nối</span>
-            </div>
-        </div>
+  <div class="box">
+    <div class="row">
+      <input id="apiKey" type="password" placeholder="Nhập API Key..." autocomplete="off">
+      <button class="primary" id="btnConnect" onclick="connectAPI()">Kết nối</button>
+    </div>
+    <div style="font-size:10px;margin-top:4px;color:#666">
+      <input type="checkbox" id="saveKey" checked style="width:auto"> Lưu Key
+      <span style="margin-left:8px">Country US: <b>1</b> | Service: <b>1722</b></span>
+    </div>
+  </div>
 
-        <!-- Order Section -->
-        <div class="section">
-            <div class="section-title">📞 Thuê số (US - Rips By TriumPh)</div>
-            <button class="btn-primary" id="orderBtn" onclick="createOrder()" disabled>
-                📞 Thuê số mới
-            </button>
-            <div class="phone-display" id="phoneDisplay" onclick="copyPhone()">
-                Chưa có số
-            </div>
-            <div class="button-row">
-                <button class="btn-secondary" id="cancelBtn" onclick="cancelOrder()" disabled>❌ Hủy</button>
-                <button class="btn-danger" id="resendBtn" onclick="resendSMS()" disabled>🔄 Gửi lại</button>
-            </div>
-        </div>
+  <div id="status" class="status idle">⚡ Nhập API Key và nhấn Kết nối</div>
 
-        <!-- OTP Section -->
-        <div class="section">
-            <div class="section-title">📨 Nhận OTP</div>
-            <div class="otp-display" id="otpDisplay">
-                <span class="otp-waiting">⏳ Đang chờ code...</span>
-            </div>
-            <button class="btn-info" id="copyOtpBtn" onclick="copyOTP()" disabled>📋 Copy Code</button>
-            <div class="info-row">
-                <span>Order ID: <strong id="orderIdInfo">---</strong></span>
-                <span>Hết hạn: <strong id="expiresInfo">---</strong></span>
-                <span>Resend: <strong id="resendCountInfo">0</strong></span>
-            </div>
-        </div>
+  <div class="scroll">
+    <div class="box">
+      <h2>📱 Thuê số US - Rips By Triumph</h2>
+      <div class="row">
+        <button class="primary" id="btnRent" onclick="rentPhone()" disabled style="flex:1">📞 Thuê số mới</button>
+        <button class="gray small" id="btnCancel" onclick="cancelOrder()" disabled>❌ Hủy</button>
+      </div>
 
-        <!-- Random & Custom Section -->
-        <div class="section">
-            <div class="section-title">🎲 Random & ✏️ Tùy chỉnh</div>
-            <div class="button-row" style="margin-bottom: 8px;">
-                <button class="btn-random-green" onclick="random1to10()">🎲 01-10</button>
-                <button class="btn-random-red" onclick="random1975to2002()">🎰 1975-2002</button>
-            </div>
-            <div style="display: flex; gap: 8px;">
-                <input type="text" id="customString" value="DMXFXQD" placeholder="Nhập chuỗi...">
-                <button class="btn-info" onclick="copyCustom()">📋 Copy</button>
-            </div>
-        </div>
+      <div id="phoneBox" class="display" style="display:none">📱 <span id="phoneText"></span></div>
+      <div id="otpBox" class="display otp waiting">⏳ Chưa có code</div>
 
-        <!-- Debug Panel -->
-        <div class="section">
-            <div class="section-title">🔍 Debug Log</div>
-            <div class="debug-panel" id="debugPanel">
-                [INFO] Tool sẵn sàng...
-            </div>
-        </div>
+      <div class="row" id="otpActions" style="display:none;margin-top:5px">
+        <button class="info small" onclick="copyOTP()" style="flex:1">📋 Copy Code</button>
+        <button class="danger small" id="btnResend" onclick="resendSMS()" style="flex:1">🔄 Gửi lại</button>
+      </div>
+
+      <div id="orderInfo" class="info-line" style="display:none">
+        <span>ID: <b id="orderIdText"></b></span>
+        <span>Hết hạn: <b id="expiresText">N/A</b>s</span>
+        <span>Poll: <b id="pollText">0</b></span>
+      </div>
+
+      <div class="feedback" id="phoneFb">✅ Đã copy số!</div>
+      <div class="feedback" id="otpFb">✅ Đã copy code!</div>
+      <div class="debug" id="debug"></div>
     </div>
 
-    <div class="feedback-toast" id="feedbackToast"></div>
-
-    <script>
-        // ============ STATE ============
-        const API_BASE = 'https://api.otphub.net/api/v1';
-        const PROXY_BASE = 'https://api.allorigins.win/raw?url=';
-        const SERVICE_NAME = 'Rips By TriumPh';
-        const SERVICE_ID = '1722';
-        const COUNTRY_ID = '1';
-
-        let state = {
-            apiKey: '',
-            mode: 'direct',
-            connected: false,
-            serviceId: SERVICE_ID,
-            currentOrder: null,
-            pollingInterval: null,
-            pollCount: 0,
-            maxPolls: 120,
-            currentOTP: null,
-            resendCount: 0,
-            debugLines: []
-        };
-
-        // ============ INIT ============
-        function init() {
-            loadSavedKey();
-            updateMode();
-            addDebug('🚀 Tool khởi động', 'INFO');
-            addDebug(`🎯 Dịch vụ: ${SERVICE_NAME} (ID: ${SERVICE_ID})`, 'INFO');
-            addDebug(`🌍 Quốc gia: US (ID: ${COUNTRY_ID})`, 'INFO');
-        }
-
-        function loadSavedKey() {
-            const saved = localStorage.getItem('otphub_api_key_v2');
-            if (saved) {
-                document.getElementById('apiKeyInput').value = saved;
-                document.getElementById('saveKeyCheckbox').checked = true;
-                addDebug('💾 Đã load API Key từ localStorage', 'INFO');
-                // Tự động kết nối nếu có key
-                setTimeout(() => connectAPI(), 300);
-            }
-        }
-
-        // ============ DEBUG ============
-        function addDebug(message, type = 'INFO') {
-            const now = new Date();
-            const time = now.toLocaleTimeString('vi-VN', { hour12: false });
-            const prefix = {
-                'INFO': '📘',
-                'REQUEST': '🔄',
-                'RESPONSE': '📡',
-                'ORDER': '📞',
-                'OTP': '🎉',
-                'ERROR': '❌',
-                'CONNECT': '🔌'
-            } [type] || '📘';
-
-            const line = `[${time}] ${prefix} ${message}`;
-            state.debugLines.push(line);
-
-            // Giữ 15 dòng gần nhất
-            if (state.debugLines.length > 15) {
-                state.debugLines = state.debugLines.slice(-15);
-            }
-
-            const panel = document.getElementById('debugPanel');
-            if (panel) {
-                panel.textContent = state.debugLines.join('\n');
-                panel.scrollTop = panel.scrollHeight;
-            }
-
-            console.log(`[OTP Hub] ${line}`);
-        }
-
-        // ============ TOAST ============
-        function showToast(message) {
-            const toast = document.getElementById('feedbackToast');
-            toast.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 1200);
-        }
-
-        // ============ API KEY ============
-        function updateMode() {
-            state.mode = document.getElementById('modeSelect').value;
-            addDebug(`🔌 Chế độ: ${state.mode === 'direct' ? 'Direct API' : 'CORS Proxy'}`, 'CONNECT');
-        }
-
-        function getBaseURL() {
-            if (state.mode === 'proxy') {
-                return PROXY_BASE + encodeURIComponent(API_BASE);
-            }
-            return API_BASE;
-        }
-
-        async function apiRequest(method, endpoint, body = null, useKey = true) {
-            let url = `${getBaseURL()}${endpoint}`;
-
-            // Nếu là direct mode, thêm key vào URL
-            if (state.mode === 'direct' && useKey && state.apiKey) {
-                const separator = endpoint.includes('?') ? '&' : '?';
-                url = `${API_BASE}${endpoint}${separator}key=${state.apiKey}`;
-            } else if (state.mode === 'proxy' && useKey && state.apiKey) {
-                const separator = endpoint.includes('?') ? '&' : '?';
-                const fullEndpoint = `${endpoint}${separator}key=${state.apiKey}`;
-                url = PROXY_BASE + encodeURIComponent(API_BASE + fullEndpoint);
-            }
-
-            const headers = {
-                'Content-Type': 'application/json',
-            };
-
-            // Thêm x-api-key header cho cả 2 mode
-            if (useKey && state.apiKey) {
-                headers['x-api-key'] = state.apiKey;
-            }
-
-            const options = {
-                method: method,
-                headers: headers,
-            };
-
-            if (body && method !== 'GET') {
-                options.body = JSON.stringify(body);
-            }
-
-            addDebug(`${method} ${endpoint}`, 'REQUEST');
-            if (body) {
-                addDebug(`Body: ${JSON.stringify(body)}`, 'REQUEST');
-            }
-
-            try {
-                const response = await fetch(url, options);
-                const data = await response.json();
-
-                addDebug(`Status: ${response.status}`, 'RESPONSE');
-                addDebug(`Data: ${JSON.stringify(data).substring(0, 100)}`, 'RESPONSE');
-
-                if (!data.success && data.error) {
-                    throw new Error(data.error || data.message || 'Lỗi API');
-                }
-
-                return data;
-            } catch (error) {
-                addDebug(`Lỗi: ${error.message}`, 'ERROR');
-
-                // Auto-fallback nếu direct bị lỗi CORS
-                if (state.mode === 'direct' && error.message.includes('Failed to fetch')) {
-                    addDebug('⚠️ Có thể lỗi CORS, thử chuyển sang Proxy...', 'ERROR');
-                    document.getElementById('modeSelect').value = 'proxy';
-                    updateMode();
-                    // Thử lại với proxy
-                    return apiRequest(method, endpoint, body, useKey);
-                }
-
-                throw error;
-            }
-        }
-
-        async function connectAPI() {
-            const apiKey = document.getElementById('apiKeyInput').value.trim();
-            if (!apiKey) {
-                showToast('❌ Vui lòng nhập API Key!');
-                addDebug('❌ API Key trống', 'ERROR');
-                return;
-            }
-
-            state.apiKey = apiKey;
-            const connectBtn = document.getElementById('connectBtn');
-            const connectBtnText = document.getElementById('connectBtnText');
-            const statusBadge = document.getElementById('statusBadge');
-
-            connectBtn.disabled = true;
-            connectBtnText.innerHTML = '<span class="spinner"></span> Đang kết nối...';
-            statusBadge.textContent = 'Đang kết nối...';
-            statusBadge.className = 'status-badge';
-            addDebug('🔌 Đang xác thực API Key...', 'CONNECT');
-
-            try {
-                // Thử lấy danh sách dịch vụ để xác thực
-                const data = await apiRequest('GET', '/services', null, true);
-
-                if (data.success) {
-                    state.connected = true;
-                    state.serviceId = SERVICE_ID;
-
-                    // Tìm dịch vụ trong danh sách
-                    if (data.data && Array.isArray(data.data)) {
-                        let found = data.data.find(s =>
-                            s.name === SERVICE_NAME ||
-                            s.name?.toLowerCase() === SERVICE_NAME.toLowerCase() ||
-                            (s.name?.toLowerCase().includes('rips') && s.name?.toLowerCase().includes('triumph'))
-                        );
-
-                        if (found) {
-                            state.serviceId = found.id || found.code || SERVICE_ID;
-                            addDebug(`✅ Tìm thấy dịch vụ: ${found.name} (ID: ${state.serviceId})`, 'CONNECT');
-                        } else {
-                            addDebug(`⚠️ Không tìm thấy "${SERVICE_NAME}", dùng ID mặc định: ${SERVICE_ID}`, 'CONNECT');
-                        }
-                    }
-
-                    statusBadge.textContent = '✅ Đã kết nối';
-                    statusBadge.className = 'status-badge status-connected';
-                    document.getElementById('orderBtn').disabled = false;
-                    showToast('✅ Kết nối thành công!');
-
-                    // Lưu key nếu được chọn
-                    if (document.getElementById('saveKeyCheckbox').checked) {
-                        localStorage.setItem('otphub_api_key_v2', apiKey);
-                        addDebug('💾 Đã lưu API Key', 'INFO');
-                    }
-                }
-            } catch (error) {
-                state.connected = false;
-                statusBadge.textContent = '❌ Lỗi kết nối';
-                statusBadge.className = 'status-badge status-disconnected';
-                document.getElementById('orderBtn').disabled = true;
-                showToast('❌ Kết nối thất bại!');
-                addDebug(`❌ Lỗi: ${error.message}`, 'ERROR');
-            } finally {
-                connectBtn.disabled = false;
-                connectBtnText.textContent = '🔌 Kết nối';
-            }
-        }
-
-        // Cho phép Enter để kết nối
-        document.addEventListener('DOMContentLoaded', () => {
-            init();
-            document.getElementById('apiKeyInput').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    connectAPI();
-                }
-            });
-        });
-
-        // ============ ORDER ============
-        async function createOrder() {
-            if (!state.connected) {
-                showToast('❌ Vui lòng kết nối API trước!');
-                return;
-            }
-
-            // Dừng polling cũ nếu có
-            stopPolling();
-
-            const orderBtn = document.getElementById('orderBtn');
-            orderBtn.disabled = true;
-            orderBtn.innerHTML = '<span class="spinner"></span> Đang tạo order...';
-            addDebug('📞 Đang tạo order mới...', 'ORDER');
-
-            try {
-                const data = await apiRequest('POST', '/order', {
-                    country: COUNTRY_ID,
-                    service: state.serviceId
-                }, true);
-
-                if (data.success && data.data) {
-                    state.currentOrder = data.data;
-                    state.pollCount = 0;
-                    state.currentOTP = null;
-                    state.resendCount = 0;
-
-                    const phone = data.data.phone || '';
-                    const cleanPhone = phone.replace(/^\+1\s*/, '').replace(/\s/g, '');
-
-                    document.getElementById('phoneDisplay').textContent = cleanPhone || phone;
-                    document.getElementById('orderIdInfo').textContent = data.data.order_id || '---';
-                    document.getElementById('expiresInfo').textContent = (data.data.expires_in || '---') + 's';
-                    document.getElementById('resendCountInfo').textContent = '0';
-                    document.getElementById('otpDisplay').innerHTML = '<span class="otp-waiting">⏳ Đang chờ code...</span>';
-                    document.getElementById('cancelBtn').disabled = false;
-                    document.getElementById('resendBtn').disabled = false;
-                    document.getElementById('copyOtpBtn').disabled = true;
-
-                    addDebug(`✅ Order created: ${data.data.order_id}`, 'ORDER');
-                    addDebug(`📱 Phone: ${cleanPhone}`, 'ORDER');
-
-                    // Tự động copy số
-                    await copyToClipboard(cleanPhone);
-                    showToast('✅ Đã copy số!');
-
-                    // Bắt đầu polling ngay
-                    pollOTP(true);
-                } else {
-                    throw new Error('Không nhận được order_id');
-                }
-            } catch (error) {
-                addDebug(`❌ Lỗi tạo order: ${error.message}`, 'ERROR');
-                showToast('❌ Tạo order thất bại!');
-                resetOrderUI();
-            } finally {
-                orderBtn.disabled = false;
-                orderBtn.innerHTML = '📞 Thuê số mới';
-            }
-        }
-
-        function resetOrderUI() {
-            document.getElementById('phoneDisplay').textContent = 'Chưa có số';
-            document.getElementById('orderIdInfo').textContent = '---';
-            document.getElementById('expiresInfo').textContent = '---';
-            document.getElementById('resendCountInfo').textContent = '0';
-            document.getElementById('otpDisplay').innerHTML = '<span class="otp-waiting">⏳ Đang chờ code...</span>';
-            document.getElementById('cancelBtn').disabled = true;
-            document.getElementById('resendBtn').disabled = true;
-            document.getElementById('copyOtpBtn').disabled = true;
-            state.currentOrder = null;
-            state.currentOTP = null;
-            state.resendCount = 0;
-            stopPolling();
-        }
-
-        // ============ POLLING OTP ============
-        async function pollOTP(immediate = false) {
-            if (!state.currentOrder || !state.currentOrder.order_id) {
-                addDebug('⚠️ Không có order để poll', 'ERROR');
-                return;
-            }
-
-            const orderId = state.currentOrder.order_id;
-
-            if (immediate) {
-                stopPolling();
-                await checkOTP(orderId);
-            }
-
-            state.pollingInterval = setInterval(async () => {
-                state.pollCount++;
-                addDebug(`🔄 Poll #${state.pollCount}/${state.maxPolls}`, 'OTP');
-
-                if (state.pollCount > state.maxPolls) {
-                    stopPolling();
-                    document.getElementById('otpDisplay').innerHTML = '<span class="otp-timeout">⏰ Hết thời gian chờ</span>';
-                    addDebug('⏰ Hết thời gian chờ (10 phút)', 'OTP');
-                    return;
-                }
-
-                await checkOTP(orderId);
-            }, 5000);
-        }
-
-        async function checkOTP(orderId) {
-            try {
-                const data = await apiRequest('GET', `/order/${orderId}`, null, true);
-
-                if (data.success && data.data) {
-                    const orderData = data.data;
-
-                    // Cập nhật thông tin
-                    if (orderData.expires_in !== undefined) {
-                        document.getElementById('expiresInfo').textContent = orderData.expires_in + 's';
-                    }
-
-                    // Kiểm tra OTP
-                    let otpValue = orderData.otp || orderData.code;
-
-                    // Nếu không có otp/code, thử extract từ full_sms
-                    if (!otpValue || otpValue === 'null' || otpValue === null) {
-                        if (orderData.full_sms) {
-                            const match = orderData.full_sms.match(/\b(\d{4,8})\b/);
-                            if (match) {
-                                otpValue = match[1];
-                            }
-                        }
-                    }
-
-                    // Kiểm tra OTP hợp lệ
-                    if (otpValue && otpValue !== 'null' && otpValue !== null && otpValue !== state.currentOTP) {
-                        state.currentOTP = otpValue;
-                        document.getElementById('otpDisplay').textContent = otpValue;
-                        document.getElementById('otpDisplay').style.color = '#333';
-                        document.getElementById('copyOtpBtn').disabled = false;
-                        addDebug(`🎉 OTP nhận được: ${otpValue}`, 'OTP');
-
-                        // Tự động copy
-                        await copyToClipboard(otpValue);
-                        showToast('✅ Đã copy code!');
-
-                        // Nếu status completed thì dừng poll
-                        if (orderData.status === 'completed') {
-                            stopPolling();
-                            addDebug('✅ Order completed, dừng poll', 'OTP');
-                        }
-                    } else if (orderData.status === 'completed' && !state.currentOTP) {
-                        // Status completed nhưng chưa có OTP
-                        document.getElementById('otpDisplay').innerHTML = '<span class="otp-timeout">⏰ Đã hoàn thành - không có OTP</span>';
-                        stopPolling();
-                    }
-
-                    // Cập nhật resend count nếu có
-                    if (orderData.resend_count !== undefined) {
-                        state.resendCount = orderData.resend_count;
-                        document.getElementById('resendCountInfo').textContent = orderData.resend_count;
-                    }
-                }
-            } catch (error) {
-                addDebug(`❌ Lỗi poll OTP: ${error.message}`, 'ERROR');
-            }
-        }
-
-        function stopPolling() {
-            if (state.pollingInterval) {
-                clearInterval(state.pollingInterval);
-                state.pollingInterval = null;
-                addDebug('⏹️ Đã dừng polling', 'INFO');
-            }
-        }
-
-        // ============ CANCEL ORDER ============
-        async function cancelOrder() {
-            if (!state.currentOrder || !state.currentOrder.order_id) {
-                showToast('❌ Không có order để hủy');
-                return;
-            }
-
-            const orderId = state.currentOrder.order_id;
-            const cancelBtn = document.getElementById('cancelBtn');
-            cancelBtn.disabled = true;
-            cancelBtn.innerHTML = '<span class="spinner"></span> Đang hủy...';
-            addDebug(`❌ Đang hủy order: ${orderId}`, 'ORDER');
-
-            try {
-                const data = await apiRequest('POST', `/order/${orderId}/cancel`, {}, true);
-
-                if (data.success) {
-                    const refundAmount = data.data?.refunded_amount || '0';
-                    showToast(`✅ Đã hủy! Hoàn: ${refundAmount}`);
-                    addDebug(`✅ Order hủy thành công, hoàn: ${refundAmount}`, 'ORDER');
-                }
-
-                resetOrderUI();
-            } catch (error) {
-                addDebug(`❌ Lỗi hủy order: ${error.message}`, 'ERROR');
-                showToast('❌ Hủy thất bại!');
-            } finally {
-                cancelBtn.disabled = false;
-                cancelBtn.innerHTML = '❌ Hủy';
-            }
-        }
-
-        // ============ RESEND SMS ============
-        async function resendSMS() {
-            if (!state.currentOrder || !state.currentOrder.order_id) {
-                showToast('❌ Không có order để gửi lại');
-                return;
-            }
-
-            const orderId = state.currentOrder.order_id;
-            const resendBtn = document.getElementById('resendBtn');
-            resendBtn.disabled = true;
-            resendBtn.innerHTML = '<span class="spinner"></span> Đang gửi...';
-            addDebug(`🔄 Đang gửi lại SMS: ${orderId}`, 'ORDER');
-
-            try {
-                const data = await apiRequest('POST', `/order/${orderId}/resend`, {}, true);
-
-                if (data.success) {
-                    state.resendCount++;
-                    document.getElementById('resendCountInfo').textContent = state.resendCount;
-                    state.currentOTP = null;
-                    document.getElementById('otpDisplay').innerHTML = '<span class="otp-waiting">⏳ Đang chờ code...</span>';
-                    document.getElementById('copyOtpBtn').disabled = true;
-                    showToast('✅ Đã gửi lại SMS!');
-                    addDebug('✅ Resend thành công', 'ORDER');
-
-                    // Reset polling
-                    state.pollCount = 0;
-                    stopPolling();
-                    pollOTP(true);
-                }
-            } catch (error) {
-                addDebug(`❌ Lỗi resend: ${error.message}`, 'ERROR');
-                showToast('❌ Gửi lại thất bại!');
-            } finally {
-                resendBtn.disabled = false;
-                resendBtn.innerHTML = '🔄 Gửi lại';
-            }
-        }
-
-        // ============ COPY FUNCTIONS ============
-        async function copyToClipboard(text) {
-            try {
-                await navigator.clipboard.writeText(text);
-                return true;
-            } catch (err) {
-                // Fallback
-                const textarea = document.createElement('textarea');
-                textarea.value = text;
-                textarea.style.position = 'fixed';
-                textarea.style.opacity = '0';
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                return true;
-            }
-        }
-
-        function copyPhone() {
-            const phone = document.getElementById('phoneDisplay').textContent;
-            if (phone && phone !== 'Chưa có số') {
-                copyToClipboard(phone);
-                showToast('✅ Đã copy số!');
-            }
-        }
-
-        function copyOTP() {
-            const otp = document.getElementById('otpDisplay').textContent;
-            if (otp && !otp.includes('⏳') && !otp.includes('⏰')) {
-                copyToClipboard(otp);
-                showToast('✅ Đã copy code!');
-            }
-        }
-
-        function copyCustom() {
-            const text = document.getElementById('customString').value.trim();
-            if (text) {
-                copyToClipboard(text);
-                showToast('✅ Đã copy!');
-            } else {
-                showToast('⚠️ Chuỗi rỗng!');
-            }
-        }
-
-        // ============ RANDOM ============
-        function random1to10() {
-            const num = Math.floor(Math.random() * 10) + 1;
-            const formatted = String(num).padStart(2, '0');
-            copyToClipboard(formatted);
-            showToast(`✅ Đã copy: ${formatted}`);
-            addDebug(`🎲 Random 1-10: ${formatted}`, 'INFO');
-        }
-
-        function random1975to2002() {
-            const num = Math.floor(Math.random() * (2002 - 1975 + 1)) + 1975;
-            const formatted = String(num);
-            copyToClipboard(formatted);
-            showToast(`✅ Đã copy: ${formatted}`);
-            addDebug(`🎰 Random 1975-2002: ${formatted}`, 'INFO');
-        }
-
-        // ============ CLEANUP ============
-        window.addEventListener('beforeunload', () => {
-            stopPolling();
-        });
-    </script>
+    <div class="box">
+      <h2>🎲 Random 01-10</h2>
+      <button class="success" onclick="random1to10()" style="width:100%">Random & Copy</button>
+      <div class="feedback" id="r1Fb">✅ Đã copy!</div>
+    </div>
+
+    <div class="box">
+      <h2>🎰 Random 1975-2002</h2>
+      <button class="danger" onclick="random1975to2002()" style="width:100%">Random & Copy</button>
+      <div class="feedback" id="r2Fb">✅ Đã copy!</div>
+    </div>
+
+    <div class="box">
+      <h2>✏️ Chuỗi tùy chỉnh</h2>
+      <div class="row">
+        <input id="customText" value="DMXFXQD">
+        <button class="info small" onclick="copyCustomString()">Copy</button>
+      </div>
+      <div class="feedback" id="customFb">✅ Đã copy!</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE_URL = 'https://api.otphub.net/api/v1';
+const COUNTRY_ID = '1';
+const SERVICE_ID = '1722';
+
+let API_KEY = '';
+let currentOrderId = '';
+let currentOTP = '';
+let phoneNumber = '';
+let pollTimer = null;
+let pollCount = 0;
+const MAX_POLL = 120;
+
+const $ = id => document.getElementById(id);
+
+function log(msg, data=null){
+  const line = `[${new Date().toLocaleTimeString()}] ${msg}` + (data ? ' | ' + JSON.stringify(data).slice(0,220) : '');
+  console.log(line, data || '');
+  $('debug').style.display = 'block';
+  $('debug').innerHTML = line + '<br>' + $('debug').innerHTML;
+  $('debug').innerHTML = $('debug').innerHTML.split('<br>').slice(0,16).join('<br>');
+}
+
+function setStatus(text, cls='idle'){
+  $('status').textContent = text;
+  $('status').className = 'status ' + cls;
+}
+
+function apiUrl(endpoint){
+  const joiner = endpoint.includes('?') ? '&' : '?';
+  return `${BASE_URL}${endpoint}${joiner}key=${encodeURIComponent(API_KEY)}`;
+}
+
+async function apiCall(endpoint, method='GET', body=null){
+  if(!API_KEY) throw new Error('Chưa nhập API Key');
+
+  const options = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY
+    }
+  };
+
+  if(body && method !== 'GET'){
+    options.body = JSON.stringify(body);
+  }
+
+  const url = apiUrl(endpoint);
+  log(`🔄 ${method} ${endpoint}`, body);
+
+  const res = await fetch(url, options);
+  const text = await res.text();
+
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch(e) {
+    throw new Error(`Response không phải JSON: ${text.slice(0,120)}`);
+  }
+
+  log(`📡 HTTP ${res.status}`, data);
+
+  if(!res.ok){
+    throw new Error(data.message || data.error || `HTTP ${res.status}`);
+  }
+
+  return data;
+}
+
+function connectAPI(){
+  const key = $('apiKey').value.trim();
+  if(!key){
+    setStatus('❌ Vui lòng nhập API Key', 'err');
+    return;
+  }
+
+  API_KEY = key;
+
+  if($('saveKey').checked){
+    localStorage.setItem('otphub_api_key_fixed', API_KEY);
+  } else {
+    localStorage.removeItem('otphub_api_key_fixed');
+  }
+
+  $('btnRent').disabled = false;
+  setStatus('✅ Đã sẵn sàng | US=1 | Rips By Triumph=1722', 'ok');
+  log('✅ Connected locally. Không gọi /services nữa.');
+}
+
+async function rentPhone(){
+  if(!API_KEY){
+    setStatus('❌ Chưa kết nối API Key', 'err');
+    return;
+  }
+
+  stopPolling();
+  resetOrderUI(false);
+
+  $('btnRent').disabled = true;
+  $('btnRent').textContent = '⏳ Đang thuê...';
+
+  try{
+    const body = {
+      country: COUNTRY_ID,
+      service: SERVICE_ID
+    };
+
+    const data = await apiCall('/order', 'POST', body);
+
+    if(!data.success || !data.data || !data.data.order_id){
+      throw new Error(data.message || 'API không trả order_id');
+    }
+
+    currentOrderId = data.data.order_id;
+    phoneNumber = cleanUSPhone(data.data.phone || '');
+
+    $('phoneBox').style.display = 'block';
+    $('phoneText').textContent = phoneNumber || data.data.phone || 'N/A';
+
+    $('orderInfo').style.display = 'flex';
+    $('orderIdText').textContent = currentOrderId;
+    $('expiresText').textContent = data.data.expires_in ?? 'N/A';
+    $('pollText').textContent = '0';
+
+    $('otpBox').textContent = '⏳ Đang chờ code...';
+    $('otpBox').className = 'display otp waiting';
+
+    $('btnCancel').disabled = false;
+    $('btnResend').disabled = false;
+
+    if(phoneNumber){
+      await copyText(phoneNumber);
+      showFeedback('phoneFb');
+    }
+
+    setStatus('✅ Thuê số thành công, đang chờ OTP...', 'ok');
+    log('📞 ORDER CREATED', data.data);
+
+    startPolling();
+
+  }catch(err){
+    setStatus('❌ Lỗi thuê số: ' + err.message, 'err');
+    log('❌ Rent error: ' + err.message);
+    resetOrderUI(true);
+  }finally{
+    $('btnRent').disabled = false;
+    $('btnRent').textContent = '📞 Thuê số mới';
+  }
+}
+
+function cleanUSPhone(phone){
+  let p = String(phone).replace(/\D/g,'');
+  if(p.startsWith('1') && p.length === 11) p = p.slice(1);
+  return p;
+}
+
+function startPolling(){
+  stopPolling();
+  pollCount = 0;
+  currentOTP = '';
+  pollOTP();
+  pollTimer = setInterval(pollOTP, 5000);
+}
+
+async function pollOTP(){
+  if(!currentOrderId) return;
+
+  pollCount++;
+  $('pollText').textContent = pollCount;
+
+  if(pollCount > MAX_POLL){
+    stopPolling();
+    $('otpBox').textContent = '⏰ Hết thời gian chờ';
+    $('otpBox').className = 'display otp waiting';
+    setStatus('⏰ Hết thời gian chờ OTP', 'wait');
+    return;
+  }
+
+  try{
+    const data = await apiCall(`/order/${encodeURIComponent(currentOrderId)}`, 'GET');
+
+    if(!data.success || !data.data) return;
+
+    const d = data.data;
+
+    if(d.expires_in !== undefined){
+      $('expiresText').textContent = d.expires_in;
+    }
+
+    let otp = extractOTP(d);
+
+    log(`🔍 Poll #${pollCount} | status=${d.status} | otp=${otp || 'null'}`);
+
+    if(otp && otp !== currentOTP){
+      currentOTP = otp;
+      $('otpBox').textContent = otp;
+      $('otpBox').className = 'display otp';
+      $('otpActions').style.display = 'flex';
+
+      await copyText(otp);
+      showFeedback('otpFb');
+
+      setStatus('✅ Đã nhận OTP: ' + otp, 'ok');
+      log('🎉 OTP RECEIVED: ' + otp, d);
+
+      if(d.status === 'completed'){
+        stopPolling();
+      }
+    }
+
+    if(d.status === 'completed' && !otp){
+      stopPolling();
+      setStatus('⚠️ Order completed nhưng chưa thấy OTP field', 'wait');
+    }
+
+  }catch(err){
+    log('❌ Poll error: ' + err.message);
+  }
+}
+
+function extractOTP(d){
+  if(d.otp && String(d.otp).trim() && String(d.otp).toLowerCase() !== 'null'){
+    return String(d.otp).trim();
+  }
+
+  if(d.code && String(d.code).trim() && String(d.code).toLowerCase() !== 'null'){
+    return String(d.code).trim();
+  }
+
+  if(d.full_sms){
+    const match = String(d.full_sms).match(/\b(\d{4,8})\b/);
+    if(match) return match[1];
+  }
+
+  return '';
+}
+
+async function cancelOrder(){
+  if(!currentOrderId) return;
+
+  try{
+    const oid = currentOrderId;
+    const data = await apiCall(`/order/${encodeURIComponent(oid)}/cancel`, 'POST');
+
+    stopPolling();
+    resetOrderUI(true);
+
+    const refund = data.data?.refunded_amount ?? data.refunded_amount ?? '?';
+    setStatus('✅ Đã hủy order. Refund: ' + refund, 'ok');
+    log('✅ Cancel success', data);
+
+  }catch(err){
+    setStatus('❌ Lỗi hủy: ' + err.message, 'err');
+    log('❌ Cancel error: ' + err.message);
+  }
+}
+
+async function resendSMS(){
+  if(!currentOrderId) return;
+
+  $('btnResend').disabled = true;
+  $('btnResend').textContent = '⏳...';
+
+  try{
+    const data = await apiCall(`/order/${encodeURIComponent(currentOrderId)}/resend`, 'POST');
+
+    currentOTP = '';
+    pollCount = 0;
+    $('otpBox').textContent = '⏳ Đang chờ code...';
+    $('otpBox').className = 'display otp waiting';
+    $('otpActions').style.display = 'none';
+
+    setStatus('✅ Đã yêu cầu gửi lại SMS', 'ok');
+    log('🔄 Resend success', data);
+
+    startPolling();
+
+  }catch(err){
+    setStatus('❌ Lỗi gửi lại: ' + err.message, 'err');
+    log('❌ Resend error: ' + err.message);
+  }finally{
+    $('btnResend').disabled = false;
+    $('btnResend').textContent = '🔄 Gửi lại';
+  }
+}
+
+function stopPolling(){
+  if(pollTimer){
+    clearInterval(pollTimer);
+    pollTimer = null;
+    log('⏹️ Stop polling');
+  }
+}
+
+function resetOrderUI(clearAll=true){
+  if(clearAll){
+    currentOrderId = '';
+    currentOTP = '';
+    phoneNumber = '';
+  }
+
+  $('phoneBox').style.display = 'none';
+  $('orderInfo').style.display = 'none';
+  $('otpActions').style.display = 'none';
+
+  $('otpBox').textContent = '⏳ Chưa có code';
+  $('otpBox').className = 'display otp waiting';
+
+  $('btnCancel').disabled = true;
+  $('btnResend').disabled = true;
+}
+
+async function copyOTP(){
+  if(currentOTP){
+    await copyText(currentOTP);
+    showFeedback('otpFb');
+  }
+}
+
+async function random1to10(){
+  const n = Math.floor(Math.random() * 10) + 1;
+  await copyText(String(n).padStart(2,'0'));
+  showFeedback('r1Fb');
+}
+
+async function random1975to2002(){
+  const n = Math.floor(Math.random() * (2002 - 1975 + 1)) + 1975;
+  await copyText(String(n));
+  showFeedback('r2Fb');
+}
+
+async function copyCustomString(){
+  const str = $('customText').value.trim();
+  if(!str) return;
+  await copyText(str);
+  showFeedback('customFb');
+}
+
+async function copyText(text){
+  try{
+    await navigator.clipboard.writeText(text);
+  }catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+}
+
+function showFeedback(id){
+  const el = $(id);
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 1200);
+}
+
+$('apiKey').addEventListener('keypress', e => {
+  if(e.key === 'Enter') connectAPI();
+});
+
+$('saveKey').addEventListener('change', () => {
+  if($('saveKey').checked && API_KEY){
+    localStorage.setItem('otphub_api_key_fixed', API_KEY);
+  }else{
+    localStorage.removeItem('otphub_api_key_fixed');
+  }
+});
+
+window.addEventListener('beforeunload', stopPolling);
+
+(function init(){
+  const saved = localStorage.getItem('otphub_api_key_fixed');
+  if(saved){
+    $('apiKey').value = saved;
+    $('saveKey').checked = true;
+  }
+  log('🚀 Tool started | Fixed API: country=1 service=1722');
+})();
+</script>
 </body>
 </html>
